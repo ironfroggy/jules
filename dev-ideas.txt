@@ -1,0 +1,18 @@
+The idea behind Jules is to give a lot of control but let it be quick to get started,
+by mapping a set of input content into data and templates, and producing the site
+as quickly as possible, but allowing middleware and plugins to customize what happens.
+
+A Jules site is a directory with a few key subdirectories. The content/ directory is
+a set of .txt and .rst files defining pages and posts. The base/ directory is a set of
+static files copied to render the site into. So this might hold a static/ directory
+for your CSS and JS, and a favicon. It is copied to the output/ directory before rendering.
+
+The files in content/ are searched and matched on their basename, so foo.rst and foo.yaml
+will be matched up. The renderer will be fed all of these and the output
+written into output/
+
+The renderers are plugins found in the jules.renderers namespace. A renderer is a subclass
+of jules.base.JulesRenderer and defines a render() method taking a list of open files. It
+will inspect their names to determine types and process them. The builtin renderer will
+look for a title: in the .yaml and render the .rst into an HTML snippet for the body. It
+will take these and render the final template into output/SLUG.html
