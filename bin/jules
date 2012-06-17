@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+import os
+import shutil
+
+from straight.command import Command, SubCommand, Option
+
+import jules
+
+
+class BaseCopyCommand(Command):
+
+    force = Option(short='-f', dest='force', action='store_true')
+
+    def execute(self, **kwargs):
+        output_dir = self.parent.get_dir('output')
+        if not os.path.exists(output_dir) or self.args['force']:
+            if self.args['force']:
+                shutil.rmtree(output_dir)
+            shutil.copytree(self.parent.get_dir('base'), output_dir)
+        else:
+            print("error: Refusing to replace {} output directory!".format(output_dir))
+
+class JulesCommand(Command):
+
+    version = "0.1"
+
+    path = Option(long='--path', dest='path')
+
+    basecopy = SubCommand('basecopy', BaseCopyCommand)
+
+    def get_path(self):
+        path = self.args['path']
+        self.args['path'] = path = path if path is not None else os.getcwd()
+        return path
+
+    def get_dir(self, name):
+        return os.path.join(self.get_path(), name)
+
+
+if __name__ == '__main__':
+    import sys
+    JulesCommand().run(sys.argv[1:])
