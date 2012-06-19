@@ -18,5 +18,8 @@ setup(name='jules',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
         'Environment :: Plugins',
+    ],
+    scripts = [
+        'bin/jules',
     ]
 )

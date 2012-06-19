@@ -1,0 +1,22 @@
+from straight.plugin import load
+
+
+def maybe_call(obj, name, *args, **kwargs):
+    method = getattr(obj, name, None)
+    if method is not None:
+        return method(*args, **kwargs)
+
+def middleware(method, *args, **kwargs):
+    plugins = load('jules.plugins')
+    plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
+    for plugin in plugins:
+        maybe_call(plugin, method, *args, **kwargs)
+
+def pipeline(method, first, *args, **kwargs):
+    plugins = load('jules.plugins')
+    plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
+    for plugin in plugins:
+        new_first = maybe_call(plugin, method, first, *args, **kwargs)
+        if new_first is not None:
+            first = new_first
+    return first

@@ -4,40 +4,74 @@ from __future__ import print_function
 
 import os
 import shutil
+import operator
+import itertools
+
+import yaml
 
 from straight.command import Command, SubCommand, Option
+from straight.plugin import load
 
 import jules
+from jules.utils import maybe_call, middleware
 
 
-class BaseCopyCommand(Command):
+class BuildCommand(Command):
 
     force = Option(short='-f', dest='force', action='store_true')
 
     def execute(self, **kwargs):
-        output_dir = self.parent.get_dir('output')
+        output_dir = self.parent.args['output']
         if not os.path.exists(output_dir) or self.args['force']:
             if self.args['force']:
-                shutil.rmtree(output_dir)
-            shutil.copytree(self.parent.get_dir('base'), output_dir)
+                if os.path.exists(output_dir):
+                    shutil.rmtree(output_dir)
+            os.mkdir(output_dir)
+
+            path = self.parent.args['path']
+            input_dirs = []
+
+            for child in os.listdir(path):
+                child = os.path.join(path, child)
+                if os.path.isdir(child):
+                    input_dirs.append(child)
+
+            engine = jules.JulesEngine()
+            engine.load_plugins()
+            engine.input_dirs = input_dirs[:]
+            engine.find_bundles()
+
+            for k in engine.bundles:
+                engine.middleware('preprocess_bundle', k, engine.bundles[k])
+                for input_dir, directory, filename in engine.bundles[k]:
+                    engine.middleware('preprocess_bundle_file',
+                        k, input_dir, directory, filename)
+
+            middleware('preprocess_input_dirs', input_dirs)
+
+            for input_dir in input_dirs:
+                middleware('process_input_dir', input_dir)
+
+            for k, bundle in engine.bundles.items():
+                print(k, bundle.tags)
+                for input_dir, directory, filename in bundle:
+                    pass
+            
         else:
             print("error: Refusing to replace {} output directory!".format(output_dir))
+
 
 class JulesCommand(Command):
 
     version = "0.1"
 
-    path = Option(long='--path', dest='path')
+    path = Option(short='-p', dest='path', nargs=1, default='input')
+    output = Option(short='-o', long='--output', dest='output', nargs=1, default='output')
 
-    basecopy = SubCommand('basecopy', BaseCopyCommand)
-
-    def get_path(self):
-        path = self.args['path']
-        self.args['path'] = path = path if path is not None else os.getcwd()
-        return path
+    basecopy = SubCommand('build', BuildCommand)
 
     def get_dir(self, name):
-        return os.path.join(self.get_path(), name)
+        return os.path.join(self.args['path'], name)
 
 
 if __name__ == '__main__':

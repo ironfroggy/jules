@@ -16,3 +16,45 @@ of jules.base.JulesRenderer and defines a render() method taking a list of open 
 will inspect their names to determine types and process them. The builtin renderer will
 look for a title: in the .yaml and render the .rst into an HTML snippet for the body. It
 will take these and render the final template into output/SLUG.html
+
+---
+
+1. Find the list of input directories
+2. For each INPUT_DIR, group all files by basename (sans-extension)
+2. For each such BUNDLE, run preprocess middleware and collect callbacks
+4. For each BUNDLE again, run render process passing callbacks
+5. To render a BUNDLE, merge mapping returned from all callbacks and use as a context
+
+EXAMPLE: How will tags work?
+filename.yaml will have a tags: property, a list of tags. filename.rst is the contents.
+somewhere else, an index.html.mustache is a mustache template that wants a list of all
+tags in all files. How does it get this?
+Before walking over any files, a list of prerender middleware plugins are loaded. For
+each file, each of these plugins is asked to process it with their prerender_bundle
+method. a TagMiddleware plugin would take each bundle with a .yaml file, read the tags
+property, and collect a set of all the tags it found and the bundles they were found
+in.
+At render time, each file is rendered based on its extension. Mustache templates get
+rendered thusly and passed a list of plugins. The index page would loop over the plugins
+and look for tag plugin and ask it for a list of tags it found. This would render a tag
+cloud.
+
+There may also be a tag.html.mustache which wants to get rendered to different names for
+each tag. How would this happen?
+
+Maybe there would be a certain kind of file? Some extension to denote it as defining
+what render files are defined by it. By default, each bundle renders a .html of the same
+name and path. But, a .targets file might define more. But what would the format of this
+be? It would have to be turing complete, how would it work? would it be a template
+rendering a list of names? For now, it could be able to render a list of names, by just
+being another template. If it renders a list of tag/{{tag}} then it will target pages
+by those names (the .html added by the renderer). later, if i want to add more, it can
+be expressed by something like .target.py and then it would be a shell script to run
+and send yaml or JSON into stdin, reading the list from stdout.
+
+
+middleware/plugin hooks expected:
+preprocess_input_dirs
+preprocess_input_dir
+preprocess_input_file
+preprocess_bundle
