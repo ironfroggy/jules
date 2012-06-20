@@ -30,28 +30,10 @@ class BuildCommand(Command):
             os.mkdir(output_dir)
 
             path = self.parent.args['path']
-            input_dirs = []
 
-            for child in os.listdir(path):
-                child = os.path.join(path, child)
-                if os.path.isdir(child):
-                    input_dirs.append(child)
-
-            engine = jules.JulesEngine()
-            engine.load_plugins()
-            engine.input_dirs = input_dirs[:]
-            engine.find_bundles()
-
-            for k in engine.bundles:
-                engine.middleware('preprocess_bundle', k, engine.bundles[k])
-                for input_dir, directory, filename in engine.bundles[k]:
-                    engine.middleware('preprocess_bundle_file',
-                        k, input_dir, directory, filename)
-
-            middleware('preprocess_input_dirs', input_dirs)
-
-            for input_dir in input_dirs:
-                middleware('process_input_dir', input_dir)
+            engine = jules.JulesEngine(path)
+            engine.prepare()
+            engine.prepare_bundles()
 
             for k, bundle in engine.bundles.items():
                 if bundle.meta.get('render') == 'jinja2':

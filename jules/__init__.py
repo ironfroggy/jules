@@ -1,4 +1,5 @@
 import os
+import re
 
 from straight.plugin import load
 from jules.utils import middleware, pipeline, maybe_call
@@ -6,11 +7,33 @@ from jules.utils import middleware, pipeline, maybe_call
 
 class JulesEngine(object):
 
-    def __init__(self):
+    def __init__(self, src_path):
+        self.src_path = src_path
         self.input_dirs = []
         self.bundles = {}
         self.context = {}
         self.plugins = []
+
+    def prepare(self):
+        self.load_plugins()
+        for child in os.listdir(self.src_path):
+            child = os.path.join(self.src_path, child)
+            if os.path.isdir(child):
+                self.input_dirs.append(child)
+
+        def key(filename):
+            d = re.search(r'^(\d+)', filename)
+            if d:
+                d = int(d.groups()[0])
+
+            s = re.search(r'^\d?([^\d]+)', filename)
+            if s:
+                s = s.groups()[0]
+
+            return (d, s)
+        self.input_dirs.sort(key=key)
+
+        self.find_bundles()
 
     def load_plugins(self, ns='jules.plugins'):
         self.plugins = load(ns)
@@ -63,6 +86,13 @@ class JulesEngine(object):
                 key = os.path.join(directory, base)
                 bundle = self.bundles.setdefault(key, Bundle(key))
                 bundle.add(input_dir, directory, fn)
+
+    def prepare_bundles(self):
+        for k in self.bundles:
+            self.middleware('preprocess_bundle', k, self.bundles[k])
+            for input_dir, directory, filename in self.bundles[k]:
+                self.middleware('preprocess_bundle_file',
+                    k, input_dir, directory, filename)
 
 
 class Bundle(dict):
