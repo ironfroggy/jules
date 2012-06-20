@@ -55,7 +55,7 @@ class BuildCommand(Command):
 
             for k, bundle in engine.bundles.items():
                 if bundle.meta.get('render') == 'jinja2':
-                    t = Template(open(bundle.by_ext('html')).read())
+                    t = Template(open(bundle.by_ext('j2')).read())
                     r = t.render({
                         'self': bundle.meta,
                         'engine': engine.context,
