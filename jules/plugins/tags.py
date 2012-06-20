@@ -9,6 +9,10 @@ def preprocess_bundle(k, bundle, engine):
     else:
         bundle.tags = []
 
+    tags = engine.context.setdefault('tags', {})
+    for tag in bundle.tags:
+        tags.setdefault(tag, set()).add(bundle.key)
+
 
 def find_bundles():
     tag_bundle = jules.BundleFactory('tags/{tag}')
