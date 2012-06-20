@@ -11,6 +11,7 @@ import yaml
 
 from straight.command import Command, SubCommand, Option
 from straight.plugin import load
+from jinja2 import Template
 
 import jules
 from jules.utils import maybe_call, middleware
@@ -53,7 +54,11 @@ class BuildCommand(Command):
                 middleware('process_input_dir', input_dir)
 
             for k, bundle in engine.bundles.items():
-                print(k, bundle.tags)
+                if bundle.meta.get('render') == 'jinja2':
+                    t = Template(open(bundle.by_ext('html')).read())
+                    r = t.render(bundle.meta)
+                    with open(os.path.join(output_dir, bundle.key) + '.html', 'w') as out:
+                        out.write(r)
                 for input_dir, directory, filename in bundle:
                     pass
             

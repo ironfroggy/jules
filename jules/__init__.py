@@ -54,6 +54,9 @@ class JulesEngine(object):
                 yield input_dir, directory, f
 
     def find_bundles(self):
+        for bundles in middleware('find_bundles'):
+            for bundle in bundles:
+                self.bundles[bundle.key] = bundle
         for input_dir, directory, dirnames, filenames in self._walk():
             for fn in filenames:
                 base, ext = os.path.splitext(fn)
@@ -89,3 +92,14 @@ class Bundle(dict):
         except KeyError:
             pass
 
+    def get_bundles(self):
+        return self
+
+
+class BundleFactory(Bundle):
+
+    def get_bundles(self, **kwargs):
+        bundle = Bundle(self.key.format(**kwargs))
+        bundle.entries = self.entries
+        bundle._files_by_ext = self._files_by_ext
+        bundle.update(self)

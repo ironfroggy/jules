@@ -9,8 +9,12 @@ def maybe_call(obj, name, *args, **kwargs):
 def middleware(method, *args, **kwargs):
     plugins = load('jules.plugins')
     plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
+    results = []
     for plugin in plugins:
-        maybe_call(plugin, method, *args, **kwargs)
+        r = maybe_call(plugin, method, *args, **kwargs)
+        if r is not None:
+            results.append(r)
+    return results
 
 def pipeline(method, first, *args, **kwargs):
     plugins = load('jules.plugins')
