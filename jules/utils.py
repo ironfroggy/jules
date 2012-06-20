@@ -20,3 +20,11 @@ def pipeline(method, first, *args, **kwargs):
         if new_first is not None:
             first = new_first
     return first
+
+def first(method, *args, **kwargs):
+    plugins = load('jules.plugins')
+    plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
+    for plugin in plugins:
+        r = maybe_call(plugin, method, *args, **kwargs)
+        if r is not None:
+            return r
