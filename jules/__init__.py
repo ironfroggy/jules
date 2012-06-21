@@ -3,6 +3,7 @@ import re
 
 import yaml
 from straight.plugin import load
+import jinja2
 
 from jules.utils import middleware, pipeline, maybe_call
 
@@ -39,6 +40,10 @@ class JulesEngine(object):
             if os.path.isdir(child):
                 self.input_dirs.append(child)
 
+        self._jinja_env = jinja2.Environment(
+            loader = jinja2.loaders.FileSystemLoader(self.input_dirs),
+        )
+
         def key(filename):
             d = re.search(r'^(\d+)', filename)
             if d:
@@ -52,6 +57,9 @@ class JulesEngine(object):
         self.input_dirs.sort(key=key)
 
         self.find_bundles()
+
+    def get_template(self, name):
+        return self._jinja_env.get_template(name)
 
     def load_plugins(self, ns='jules.plugins'):
         self.plugins = load(ns)

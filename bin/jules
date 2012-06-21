@@ -40,14 +40,14 @@ class BuildCommand(Command):
                 if render is not None:
                     if render == 'jinja2':
                         template_name = bundle.meta.get('template')
-                        template_path = None
+                        template = None
                         if template_name is not None:
-                            _, template_path = engine.find_file(template_name)
-                        if template_path is None:
+                            template = engine.get_template(template_name)
+                        if template is None:
                             template_path = bundle.by_ext('j2')
-                        t = Template(open(template_path).read())
-                        print('render', template_path, bundle.key, bundle.meta)
-                        r = t.render({
+                            with open(template_path) as f:
+                                template = Template(f.read())
+                        r = template.render({
                             'meta': bundle.meta,
                             'engine': engine.context,
                         })

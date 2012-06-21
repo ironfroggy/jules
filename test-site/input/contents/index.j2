@@ -1,11 +1,5 @@
-<html>
-    <title>{{ meta.title }}</title>
-    <body>
-        <h1>{{ meta.title }}</h1>
-        <ul>
-            {% for tag in engine.tags %}
-                <li>{{ tag }}</li>
-            {% endfor %}
-        </ul>
-    </body>
-</html>
+{% extends "base.j2" %}
+
+{% block main %}
+    omg my site
+{% endblock %}
