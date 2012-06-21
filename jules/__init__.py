@@ -66,6 +66,18 @@ class JulesEngine(object):
                 self.middleware('preprocess_bundle_file',
                     k, input_dir, directory, filename)
 
+    def get_bundles_by(self, key, order='asc'):
+        if order == 'asc':
+            reverse = False
+        elif order == 'desc':
+            reverse = True
+        else:
+            raise ValueError("Order can only be asc or desc")
+        bundles = self.bundles.values()
+        bundles = [b for b in bundles if key in b.meta]
+        bundles.sort(key=lambda b: b.meta[key], reverse=reverse)
+        return bundles
+
     def render_site(self, output_dir):
         for k, bundle in self.bundles.items():
             render = bundle.meta.get('render')
@@ -81,7 +93,7 @@ class JulesEngine(object):
                             template = jinja2.Template(f.read())
                     r = template.render({
                         'meta': bundle.meta,
-                        'engine': self.context,
+                        'engine': self,
                         'config': self.config,
                         'bundles': self.bundles.values(),
                     })

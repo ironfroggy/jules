@@ -28,7 +28,7 @@
             <published>{{ bundle.meta.created }}</published>
             <id>{{ bundle.key }}</id>
             {% for tag in bundle.meta.tags %}
-            <category   scheme="{{ content_url('blog/tags') }}"
+            <category   scheme="blog/tags"
                         term="{{tag}}"
                         label="{{ tag|title }}" />
             {% endfor %}
