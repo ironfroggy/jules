@@ -35,7 +35,9 @@ class BuildCommand(Command):
             engine.prepare()
             engine.prepare_bundles()
 
+            print('engine', engine.context)
             for k, bundle in engine.bundles.items():
+                print('bundle', k, bundle.meta)
                 render = bundle.meta.get('render')
                 if render is not None:
                     if render == 'jinja2':
@@ -50,8 +52,12 @@ class BuildCommand(Command):
                         r = template.render({
                             'meta': bundle.meta,
                             'engine': engine.context,
+                            'config': engine.config,
+                            'bundles': engine.bundles.values(),
                         })
-                        with open(os.path.join(output_dir, bundle.key) + '.html', 'w') as out:
+                        output_ext = bundle.meta.get('output_ext', 'html')
+                        output_path = os.path.join(output_dir, bundle.key) + '.' + output_ext
+                        with open(output_path, 'w') as out:
                             out.write(r)
                     else:
                         raise ValueError("Uknown renderer {}".format(render))

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>
+        {% block title %}{{ config.title }}{% endblock %}
+    </title>
+    {% block self_url %}
+    <link href="" rel="self" />
+    {% endblock %}
+
+    {% block site_url %}
+    <link href=""/>
+    {% endblock %}
+
+    {% block feed_extra %}
+    {% endblock %}
+
+    <updated>{{ time_now }}</updated>
+
+    <id>atom-feed</id>
+
+    {% for bundle in bundles %}
+    {% if bundle.meta.status == 'published' %}
+        <entry>
+            <title type="html">{{ bundle.meta.title }}</title>
+            <author><name>{{ bundle.meta.author }}</name></author>
+            <link href="{{ bundle.get_url }}"/>
+            <updated>{{ bundle.meta.created }}</updated>
+            <published>{{ bundle.meta.created }}</published>
+            <id>{{ bundle.key }}</id>
+            {% for tag in bundle.meta.tags %}
+            <category   scheme="{{ content_url('blog/tags') }}"
+                        term="{{tag}}"
+                        label="{{ tag|title }}" />
+            {% endfor %}
+
+            <content type="html">
+                {% filter forceescape -%}
+                    {{ bundle.contents }}
+                {%- endfilter %}
+            </content>
+        </entry>
+    {% endif %}
+    {% endfor %}
+</feed>
