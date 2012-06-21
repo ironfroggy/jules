@@ -1,8 +1,13 @@
 import os
 import re
 
+import yaml
 from straight.plugin import load
+
 from jules.utils import middleware, pipeline, maybe_call
+
+
+PACKAGE_DIR = os.path.dirname(__file__)
 
 
 class JulesEngine(object):
@@ -13,9 +18,22 @@ class JulesEngine(object):
         self.bundles = {}
         self.context = {}
         self.plugins = []
+        self.config = {}
+
+    def load_config(self):
+        config_path = os.path.join(self.src_path, 'site.yaml')
+        if os.path.exists(config_path):
+            with open(config_path) as f:
+                self.config.update(yaml.load(f))
 
     def prepare(self):
+        self.load_config()
         self.load_plugins()
+
+        for pack_def in self.config.get('packs', ()):
+            pack_type, pack_name = pack_def.split(':', 1)
+            if pack_type == 'jules':
+                self.input_dirs.append(os.path.join(PACKAGE_DIR, 'packs', pack_name))
         for child in os.listdir(self.src_path):
             child = os.path.join(self.src_path, child)
             if os.path.isdir(child):
@@ -86,6 +104,14 @@ class JulesEngine(object):
                 key = os.path.join(directory, base)
                 bundle = self.bundles.setdefault(key, Bundle(key))
                 bundle.add(input_dir, directory, fn)
+
+    def find_file(self, filepath):
+        filepath = os.path.relpath(filepath)
+        for k in self.bundles:
+            for input_dir, directory, filename in self.bundles[k]:
+                if filepath == os.path.relpath(os.path.join(directory, filename)):
+                    return self.bundles[k], os.path.join(input_dir, directory, filename)
+        return None, None
 
     def prepare_bundles(self):
         for k in self.bundles:

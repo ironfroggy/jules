@@ -14,7 +14,7 @@ from straight.plugin import load
 from jinja2 import Template
 
 import jules
-from jules.utils import maybe_call, middleware
+from jules.utils import maybe_call, middleware, ensure_path
 
 
 class BuildCommand(Command):
@@ -36,16 +36,31 @@ class BuildCommand(Command):
             engine.prepare_bundles()
 
             for k, bundle in engine.bundles.items():
-                if bundle.meta.get('render') == 'jinja2':
-                    t = Template(open(bundle.by_ext('j2')).read())
-                    r = t.render({
-                        'self': bundle.meta,
-                        'engine': engine.context,
-                    })
-                    with open(os.path.join(output_dir, bundle.key) + '.html', 'w') as out:
-                        out.write(r)
-                for input_dir, directory, filename in bundle:
-                    pass
+                render = bundle.meta.get('render')
+                if render is not None:
+                    if render == 'jinja2':
+                        template_name = bundle.meta.get('template')
+                        template_path = None
+                        if template_name is not None:
+                            _, template_path = engine.find_file(template_name)
+                        if template_path is None:
+                            template_path = bundle.by_ext('j2')
+                        t = Template(open(template_path).read())
+                        print('render', template_path, bundle.key, bundle.meta)
+                        r = t.render({
+                            'meta': bundle.meta,
+                            'engine': engine.context,
+                        })
+                        with open(os.path.join(output_dir, bundle.key) + '.html', 'w') as out:
+                            out.write(r)
+                    else:
+                        raise ValueError("Uknown renderer {}".format(render))
+                else:
+                    for input_dir, directory, filename in bundle:
+                        src_path = os.path.join(input_dir, directory, filename)
+                        dest_path = os.path.join(output_dir, directory, filename)
+                        ensure_path(dest_path)
+                        shutil.copy(src_path, dest_path)
             
         else:
             print("error: Refusing to replace {} output directory!".format(output_dir))

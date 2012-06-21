@@ -1,3 +1,5 @@
+import os
+
 from straight.plugin import load
 
 
@@ -32,3 +34,10 @@ def first(method, *args, **kwargs):
         r = maybe_call(plugin, method, *args, **kwargs)
         if r is not None:
             return r
+
+def ensure_path(path):
+    path_parts = os.path.split(path)
+    for i in xrange(len(path_parts)):
+        subpath = os.path.join(*path_parts[: i + 1 ])
+        if not os.path.exists(subpath):
+            os.mkdir(subpath)

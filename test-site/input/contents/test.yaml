@@ -1,3 +1,5 @@
 title: test 1 2 3
 tags:
 - test
+render: jinja2
+template: index.j2
