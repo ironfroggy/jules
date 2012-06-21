@@ -11,13 +11,14 @@ import yaml
 
 from straight.command import Command, SubCommand, Option
 from straight.plugin import load
-from jinja2 import Template
 
 import jules
-from jules.utils import maybe_call, middleware, ensure_path
+from jules.utils import maybe_call, middleware 
 
 
 class BuildCommand(Command):
+
+    version = "0.2"
 
     force = Option(short='-f', dest='force', action='store_true')
 
@@ -34,39 +35,7 @@ class BuildCommand(Command):
             engine = jules.JulesEngine(path)
             engine.prepare()
             engine.prepare_bundles()
-
-            print('engine', engine.context)
-            for k, bundle in engine.bundles.items():
-                print('bundle', k, bundle.meta)
-                render = bundle.meta.get('render')
-                if render is not None:
-                    if render == 'jinja2':
-                        template_name = bundle.meta.get('template')
-                        template = None
-                        if template_name is not None:
-                            template = engine.get_template(template_name)
-                        if template is None:
-                            template_path = bundle.by_ext('j2')
-                            with open(template_path) as f:
-                                template = Template(f.read())
-                        r = template.render({
-                            'meta': bundle.meta,
-                            'engine': engine.context,
-                            'config': engine.config,
-                            'bundles': engine.bundles.values(),
-                        })
-                        output_ext = bundle.meta.get('output_ext', 'html')
-                        output_path = os.path.join(output_dir, bundle.key) + '.' + output_ext
-                        with open(output_path, 'w') as out:
-                            out.write(r)
-                    else:
-                        raise ValueError("Uknown renderer {}".format(render))
-                else:
-                    for input_dir, directory, filename in bundle:
-                        src_path = os.path.join(input_dir, directory, filename)
-                        dest_path = os.path.join(output_dir, directory, filename)
-                        ensure_path(dest_path)
-                        shutil.copy(src_path, dest_path)
+            engine.render_site(output_dir)
             
         else:
             print("error: Refusing to replace {} output directory!".format(output_dir))
@@ -74,7 +43,7 @@ class BuildCommand(Command):
 
 class JulesCommand(Command):
 
-    version = "0.1"
+    version = "0.2"
 
     path = Option(short='-p', dest='path', nargs=1, default='input')
     output = Option(short='-o', long='--output', dest='output', nargs=1, default='output')

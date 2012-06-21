@@ -1,11 +1,12 @@
 import os
 import re
+import shutil
 
 import yaml
 from straight.plugin import load
 import jinja2
 
-from jules.utils import middleware, pipeline, maybe_call
+from jules.utils import middleware, pipeline, maybe_call, ensure_path
 
 
 PACKAGE_DIR = os.path.dirname(__file__)
@@ -57,6 +58,45 @@ class JulesEngine(object):
         self.input_dirs.sort(key=key)
 
         self.find_bundles()
+
+    def prepare_bundles(self):
+        for k in self.bundles:
+            self.middleware('preprocess_bundle', k, self.bundles[k])
+            for input_dir, directory, filename in self.bundles[k]:
+                self.middleware('preprocess_bundle_file',
+                    k, input_dir, directory, filename)
+
+    def render_site(self, output_dir):
+        for k, bundle in self.bundles.items():
+            render = bundle.meta.get('render')
+            if render is not None:
+                if render == 'jinja2':
+                    template_name = bundle.meta.get('template')
+                    template = None
+                    if template_name is not None:
+                        template = self.get_template(template_name)
+                    if template is None:
+                        template_path = bundle.by_ext('j2')
+                        with open(template_path) as f:
+                            template = jinja2.Template(f.read())
+                    r = template.render({
+                        'meta': bundle.meta,
+                        'engine': self.context,
+                        'config': self.config,
+                        'bundles': self.bundles.values(),
+                    })
+                    output_ext = bundle.meta.get('output_ext', 'html')
+                    output_path = os.path.join(output_dir, bundle.key) + '.' + output_ext
+                    with open(output_path, 'w') as out:
+                        out.write(r)
+                else:
+                    raise ValueError("Uknown renderer {}".format(render))
+            else:
+                for input_dir, directory, filename in bundle:
+                    src_path = os.path.join(input_dir, directory, filename)
+                    dest_path = os.path.join(output_dir, directory, filename)
+                    ensure_path(dest_path)
+                    shutil.copy(src_path, dest_path)
 
     def get_template(self, name):
         return self._jinja_env.get_template(name)
@@ -120,13 +160,6 @@ class JulesEngine(object):
                 if filepath == os.path.relpath(os.path.join(directory, filename)):
                     return self.bundles[k], os.path.join(input_dir, directory, filename)
         return None, None
-
-    def prepare_bundles(self):
-        for k in self.bundles:
-            self.middleware('preprocess_bundle', k, self.bundles[k])
-            for input_dir, directory, filename in self.bundles[k]:
-                self.middleware('preprocess_bundle_file',
-                    k, input_dir, directory, filename)
 
 
 class Bundle(dict):
