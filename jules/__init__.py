@@ -18,6 +18,7 @@ class JulesEngine(object):
         self.src_path = src_path
         self.input_dirs = []
         self.bundles = {}
+        self._new_bundles = {}
         self.context = {}
         self.plugins = []
         self.config = {}
@@ -60,11 +61,24 @@ class JulesEngine(object):
         self.find_bundles()
 
     def prepare_bundles(self):
-        for k in self.bundles:
-            self.middleware('preprocess_bundle', k, self.bundles[k])
-            for input_dir, directory, filename in self.bundles[k]:
+        for k, bundle in self.walk_bundles():
+            self.middleware('preprocess_bundle', k, bundle)
+            for input_dir, directory, filename in bundle:
                 self.middleware('preprocess_bundle_file',
                     k, input_dir, directory, filename)
+
+    def add_bundles(self, bundles):
+        self._new_bundles.update(bundles)
+
+    def walk_bundles(self):
+        first = True
+        while first or self._new_bundles:
+            first = False
+            if self._new_bundles:
+                self.bundles.update(self._new_bundles)
+                self._new_bundles = {}
+            for k, b in self.bundles.iteritems():
+                yield k, b
 
     def get_bundles_by(self, key, order='asc'):
         if order == 'asc':
@@ -80,6 +94,7 @@ class JulesEngine(object):
 
     def render_site(self, output_dir):
         for k, bundle in self.bundles.items():
+            print('render', k, bundle)
             render = bundle.meta.get('render')
             if render is not None:
                 if render == 'jinja2':
@@ -99,6 +114,7 @@ class JulesEngine(object):
                     })
                     output_ext = bundle.meta.get('output_ext', 'html')
                     output_path = os.path.join(output_dir, bundle.key) + '.' + output_ext
+                    ensure_path(os.path.dirname(output_path))
                     with open(output_path, 'w') as out:
                         out.write(r)
                 else:
