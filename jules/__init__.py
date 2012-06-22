@@ -120,8 +120,12 @@ class JulesEngine(object):
     def middleware(self, method, *args, **kwargs):
         """Call each loaded plugin with the same method, if it exists."""
         kwargs['engine'] = self
+        results = []
         for plugin in self.plugins:
-            maybe_call(plugin, method, *args, **kwargs)
+            r = maybe_call(plugin, method, *args, **kwargs)
+            if r is not None:
+                results.append(r)
+        return results
 
     def pipeline(self, method, first, *args, **kwargs):
         """Call each loaded plugin with the same method, if it exists,
