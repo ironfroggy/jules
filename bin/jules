@@ -30,9 +30,7 @@ class BuildCommand(Command):
                     shutil.rmtree(output_dir)
             os.mkdir(output_dir)
 
-            path = self.parent.args['path']
-
-            engine = jules.JulesEngine(path)
+            engine = jules.JulesEngine(os.path.abspath('.'))
             engine.prepare()
             engine.prepare_bundles()
             engine.render_site(output_dir)
@@ -45,13 +43,9 @@ class JulesCommand(Command):
 
     version = "0.2"
 
-    path = Option(short='-p', dest='path', nargs=1, default='input')
-    output = Option(short='-o', long='--output', dest='output', nargs=1, default='output')
+    output = Option(short='-o', long='--output', dest='output', nargs=1, default='_build')
 
     basecopy = SubCommand('build', BuildCommand)
-
-    def get_dir(self, name):
-        return os.path.join(self.args['path'], name)
 
 
 if __name__ == '__main__':

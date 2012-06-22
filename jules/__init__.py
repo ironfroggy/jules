@@ -37,6 +37,9 @@ class JulesEngine(object):
             pack_type, pack_name = pack_def.split(':', 1)
             if pack_type == 'jules':
                 self.input_dirs.append(os.path.join(PACKAGE_DIR, 'packs', pack_name))
+            elif pack_type == 'dir':
+                self.input_dirs.append(os.path.relpath(pack_name, self.src_path))
+            print(self.input_dirs)
         for child in os.listdir(self.src_path):
             child = os.path.join(self.src_path, child)
             if os.path.isdir(child):
