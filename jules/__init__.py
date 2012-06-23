@@ -42,11 +42,7 @@ class JulesEngine(object):
             if pack_type == 'jules':
                 self.input_dirs.append(os.path.join(PACKAGE_DIR, 'packs', pack_name))
             elif pack_type == 'dir':
-                self.input_dirs.append(os.path.relpath(pack_name, self.src_path))
-        for child in os.listdir(self.src_path):
-            child = os.path.join(self.src_path, child)
-            if os.path.isdir(child):
-                self.input_dirs.append(child)
+                self.input_dirs.append(os.path.abspath(pack_name))
 
         self._jinja_env = jinja2.Environment(
             loader = jinja2.loaders.FileSystemLoader(self.input_dirs),
@@ -67,21 +63,12 @@ class JulesEngine(object):
         self.find_bundles()
 
     def prepare_bundles(self):
-        ext_plugins = {}
-        for plugin in load('jules.plugins', subclasses=jules.plugins.ContentPlugin):
-            for ext in plugin.extensions:
-                ext_plugins[ext] = plugin()
-
         for k, bundle in self.walk_bundles():
             self.middleware('preprocess_bundle', k, bundle)
             for input_dir, directory, filename in bundle:
-                for ext in ext_plugins:
-                    if filename.endswith(ext):
-                        path = os.path.join(input_dir, directory, filename)
-                        bundle.content = ext_plugins[ext].parse(open(path))
-                        print("parsed content", bundle.key, id(bundle))
                 self.middleware('preprocess_bundle_file',
                     k, input_dir, directory, filename)
+            bundle.prepare_content()
 
     def add_bundles(self, bundles):
         self._new_bundles.update(bundles)
@@ -199,8 +186,6 @@ class JulesEngine(object):
                 self.bundles[bundle.key] = bundle
         for input_dir, directory, dirnames, filenames in self._walk():
             for fn in filenames:
-                if fn.startswith(('.', '~')):
-                    continue
                 base, ext = os.path.splitext(fn)
                 key = os.path.join(directory, base)
                 bundle = self.bundles.setdefault(key, Bundle(key))
@@ -244,6 +229,24 @@ class Bundle(dict):
 
     def get_bundles(self):
         return self
+
+    def prepare_content(self):
+        ext_plugins = {}
+        for plugin in load('jules.plugins', subclasses=jules.plugins.ContentPlugin):
+            for ext in plugin.extensions:
+                ext_plugins[ext] = plugin()
+
+        content_filename = None
+        if 'content' in self.meta:
+            content_filename = os.path.abspath(os.path.expanduser(self.meta['content']))
+        else:
+            for input_dir, directory, filename in self:
+                for ext in ext_plugins:
+                    if filename.endswith(ext):
+                        content_filename = os.path.join(input_dir, directory, filename)
+
+        if content_filename:
+            self.content = ext_plugins[ext].parse(open(content_filename))
 
     def url(self):
         return '/' + self.key + ".html"
