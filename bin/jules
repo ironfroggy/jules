@@ -39,6 +39,21 @@ class BuildCommand(Command):
             print("error: Refusing to replace {} output directory!".format(output_dir))
 
 
+class Serve(Command):
+
+    port = Option(dest='port', default=8000)
+
+    def execute(self, port, **kwargs):
+        import SimpleHTTPServer
+        import SocketServer
+
+        Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+        httpd = SocketServer.TCPServer(("", port), Handler)
+
+        os.chdir('_build')
+        httpd.serve_forever()
+
+
 class JulesCommand(Command):
 
     version = "0.2"
@@ -46,6 +61,7 @@ class JulesCommand(Command):
     output = Option(short='-o', long='--output', dest='output', nargs=1, default='_build')
 
     basecopy = SubCommand('build', BuildCommand)
+    serve = SubCommand('serve', Serve)
 
 
 if __name__ == '__main__':
