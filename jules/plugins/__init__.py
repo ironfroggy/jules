@@ -1,0 +1,2 @@
+class ContentPlugin(object):
+    pass

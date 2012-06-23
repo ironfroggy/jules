@@ -9,6 +9,7 @@ import yaml
 from straight.plugin import load
 import jinja2
 
+import jules
 from jules.utils import middleware, pipeline, maybe_call, ensure_path
 
 
@@ -66,9 +67,19 @@ class JulesEngine(object):
         self.find_bundles()
 
     def prepare_bundles(self):
+        ext_plugins = {}
+        for plugin in load('jules.plugins', subclasses=jules.plugins.ContentPlugin):
+            for ext in plugin.extensions:
+                ext_plugins[ext] = plugin()
+
         for k, bundle in self.walk_bundles():
             self.middleware('preprocess_bundle', k, bundle)
             for input_dir, directory, filename in bundle:
+                for ext in ext_plugins:
+                    if filename.endswith(ext):
+                        path = os.path.join(input_dir, directory, filename)
+                        bundle.content = ext_plugins[ext].parse(open(path))
+                        print("parsed content", bundle.key, id(bundle))
                 self.middleware('preprocess_bundle_file',
                     k, input_dir, directory, filename)
 
