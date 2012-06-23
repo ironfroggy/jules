@@ -185,6 +185,8 @@ class JulesEngine(object):
                 self.bundles[bundle.key] = bundle
         for input_dir, directory, dirnames, filenames in self._walk():
             for fn in filenames:
+                if fn.startswith(('.', '~')):
+                    continue
                 base, ext = os.path.splitext(fn)
                 key = os.path.join(directory, base)
                 bundle = self.bundles.setdefault(key, Bundle(key))
