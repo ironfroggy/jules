@@ -19,7 +19,7 @@ class JulesEngine(object):
 
     def __init__(self, src_path):
         self.src_path = src_path
-        self.input_dirs = []
+        self.input_dirs = [os.path.join(PACKAGE_DIR, 'packs', 'jules')]
         self.bundles = {}
         self._new_bundles = {}
         self.context = {}
@@ -112,6 +112,7 @@ class JulesEngine(object):
                         with open(template_path) as f:
                             template = jinja2.Template(f.read())
                     r = template.render({
+                        'bundle': bundle,
                         'meta': bundle.meta,
                         'engine': self,
                         'config': self.config,
@@ -230,6 +231,9 @@ class Bundle(dict):
 
     def get_bundles(self):
         return self
+
+    def url(self):
+        return '/' + self.key + ".html"
 
 
 class BundleFactory(Bundle):

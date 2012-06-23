@@ -3,6 +3,18 @@ import os
 import jules
 
 
+class TagBundle(jules.Bundle):
+
+    def __init__(self, tagname):
+        super(TagBundle, self).__init__('tags/' + tagname)
+        self.tagname = tagname
+        self.tagged = set()
+        self.meta.update({
+            'template': 'tag.j2',
+            'render': 'jinja2',
+        })
+
+
 def preprocess_bundle(k, bundle, engine):
     if 'tags' in bundle.meta:
         bundle.tags = bundle.meta['tags']
@@ -13,14 +25,9 @@ def preprocess_bundle(k, bundle, engine):
     tag_bundles = {}
     for tag in bundle.tags:
         if tag not in tags:
-            key = 'tags/{tag}'.format(tag=tag)
-            tag_bundle = tag_bundles[key] = jules.Bundle(key)
-            tag_bundle.meta.update({
-                'tag': tag,
-                'template': 'tag.j2',
-                'render': 'jinja2',
-            })
-            tag_bundle.meta.setdefault('bundles', set()).add(bundle)
+            tag_bundle = TagBundle(tag)
+            tag_bundles[tag_bundle.key] = tag_bundle
+            tag_bundle.tagged.add(bundle)
             
         tags.setdefault(tag, set()).add(bundle.key)
     if tag_bundles:
