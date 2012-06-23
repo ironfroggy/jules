@@ -96,7 +96,7 @@ class JulesEngine(object):
             for k, b in self.bundles.iteritems():
                 yield k, b
 
-    def get_bundles_by(self, key, order='asc'):
+    def get_bundles_by(self, key, order='asc', limit=None):
         if order == 'asc':
             reverse = False
         elif order == 'desc':
@@ -106,6 +106,8 @@ class JulesEngine(object):
         bundles = self.bundles.values()
         bundles = [b for b in bundles if key in b.meta]
         bundles.sort(key=lambda b: b.meta[key], reverse=reverse)
+        if limit is not None:
+            bundles = bundles[:limit]
         return bundles
 
     def render_site(self, output_dir):
