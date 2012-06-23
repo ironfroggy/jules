@@ -140,7 +140,7 @@ class JulesEngine(object):
                 for input_dir, directory, filename in bundle:
                     src_path = os.path.join(input_dir, directory, filename)
                     dest_path = os.path.join(output_dir, directory, filename)
-                    ensure_path(dest_path)
+                    ensure_path(os.path.dirname(dest_path))
                     shutil.copy(src_path, dest_path)
 
     def get_template(self, name):
