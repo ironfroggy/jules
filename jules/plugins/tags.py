@@ -14,6 +14,9 @@ class TagBundle(jules.Bundle):
             'render': 'jinja2',
         })
 
+    def url(self):
+        return "/tags/{}.html".format(self.tagname)
+
 
 def preprocess_bundle(k, bundle, engine):
     if 'tags' in bundle.meta:
@@ -28,8 +31,7 @@ def preprocess_bundle(k, bundle, engine):
             tag_bundle = TagBundle(tag)
             tag_bundles[tag_bundle.key] = tag_bundle
             tag_bundle.tagged.add(bundle)
-            
-        tags.setdefault(tag, set()).add(bundle.key)
+            tags[tag] = tag_bundle
     if tag_bundles:
         engine.add_bundles(tag_bundles)
 
