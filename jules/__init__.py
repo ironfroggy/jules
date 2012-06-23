@@ -1,3 +1,6 @@
+from __future__ import print_function
+
+
 import os
 import re
 import shutil
@@ -39,7 +42,6 @@ class JulesEngine(object):
                 self.input_dirs.append(os.path.join(PACKAGE_DIR, 'packs', pack_name))
             elif pack_type == 'dir':
                 self.input_dirs.append(os.path.relpath(pack_name, self.src_path))
-            print(self.input_dirs)
         for child in os.listdir(self.src_path):
             child = os.path.join(self.src_path, child)
             if os.path.isdir(child):
