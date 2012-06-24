@@ -25,11 +25,6 @@ class BuildCommand(Command):
     def execute(self, **kwargs):
         output_dir = self.parent.args['output']
         if not os.path.exists(output_dir) or self.args['force']:
-            if self.args['force']:
-                if os.path.exists(output_dir):
-                    shutil.rmtree(output_dir)
-            os.mkdir(output_dir)
-
             engine = jules.JulesEngine(os.path.abspath('.'))
             engine.prepare()
             engine.prepare_bundles()
