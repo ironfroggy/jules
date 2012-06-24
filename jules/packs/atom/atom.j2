@@ -4,11 +4,11 @@
         {% block title %}{{ config.title }}{% endblock %}
     </title>
     {% block self_url %}
-    <link href="" rel="self" />
+    <link href="http://{{ config.domain }}/atom.xml" rel="self" />
     {% endblock %}
 
     {% block site_url %}
-    <link href=""/>
+    <link href="http://{{ config.domain }}/"/>
     {% endblock %}
 
     {% block feed_extra %}
@@ -22,10 +22,10 @@
     {% if bundle.meta.status == 'published' %}
         <entry>
             <title type="html">{{ bundle.meta.title }}</title>
-            <author><name>{{ bundle.meta.author }}</name></author>
-            <link href="{{ bundle.get_url }}"/>
-            <updated>{{ bundle.meta.created }}</updated>
-            <published>{{ bundle.meta.created }}</published>
+            <author><name>{{ bundle.meta.author|escape or config.default_author|escape }}</name></author>
+            <link href="http://{{ config.domain }}{{ bundle.url() }}"/>
+            <updated>{{ bundle.meta.publish_date }}</updated>
+            <published>{{ bundle.meta.publish_date }}</published>
             <id>{{ bundle.key }}</id>
             {% for tag in bundle.meta.tags %}
             <category   scheme="blog/tags"
@@ -34,9 +34,7 @@
             {% endfor %}
 
             <content type="html">
-                {% filter forceescape -%}
-                    {{ bundle.contents }}
-                {%- endfilter %}
+                {{ bundle.content }}
             </content>
         </entry>
     {% endif %}

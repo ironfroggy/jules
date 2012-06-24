@@ -83,16 +83,30 @@ class JulesEngine(object):
             for k, b in self.bundles.iteritems():
                 yield k, b
 
-    def get_bundles_by(self, key, order='asc', limit=None):
+    def get_bundles_by(self, order_key=None, order='asc', limit=None, **kwargs):
         if order == 'asc':
             reverse = False
         elif order == 'desc':
             reverse = True
         else:
             raise ValueError("Order can only be asc or desc")
-        bundles = self.bundles.values()
-        bundles = [b for b in bundles if key in b.meta]
-        bundles.sort(key=lambda b: b.meta[key], reverse=reverse)
+        bundles = []
+        for bundle in self.bundles.values():
+            if order_key is not None:
+                if order_key not in bundle.meta:
+                    continue
+            ok = True
+            for k, v in kwargs.iteritems():
+                if k not in bundle.meta:
+                    ok = False
+                    break
+                if bundle.meta[k] != v:
+                    ok = False
+                    break
+            if ok:
+                bundles.append(bundle)
+        if order_key is not None:
+            bundles.sort(key=lambda b: b.meta[order_key], reverse=reverse)
         if limit is not None:
             bundles = bundles[:limit]
         return bundles
@@ -249,7 +263,8 @@ class Bundle(dict):
             self.content = ext_plugins[ext].parse(open(content_filename))
 
     def url(self):
-        return '/' + self.key + ".html"
+        key = self.key.lstrip('./')
+        return '/' + key + ".html"
 
 
 class BundleFactory(Bundle):
