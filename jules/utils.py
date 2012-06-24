@@ -41,3 +41,32 @@ def ensure_path(path):
         subpath = os.path.join(*path_parts[: i + 1 ])
         if not os.path.exists(subpath):
             os.mkdir(subpath)
+
+def filter_bundles(from_bundles, order_key=None, order='asc', limit=None, **kwargs):
+    if order == 'asc':
+        reverse = False
+    elif order == 'desc':
+        reverse = True
+    else:
+        raise ValueError("Order can only be asc or desc")
+    bundles = []
+    for bundle in from_bundles:
+        if order_key is not None:
+            if order_key not in bundle.meta:
+                continue
+        ok = True
+        for k, v in kwargs.iteritems():
+            if k not in bundle.meta:
+                ok = False
+                break
+            if bundle.meta[k] != v:
+                ok = False
+                break
+        print ok, bundle
+        if ok:
+            bundles.append(bundle)
+    if order_key is not None:
+        bundles.sort(key=lambda b: b.meta[order_key], reverse=reverse)
+    if limit is not None:
+        bundles = bundles[:limit]
+    return bundles
