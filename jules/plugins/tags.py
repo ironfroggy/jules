@@ -6,7 +6,7 @@ import jules
 class TagBundle(jules.Bundle):
 
     def __init__(self, tagname):
-        super(TagBundle, self).__init__(tagname + '/index')
+        super(TagBundle, self).__init__('tags/' + tagname)
         self.tagname = tagname
         self.tagged = set()
         self.meta.update({
@@ -15,7 +15,7 @@ class TagBundle(jules.Bundle):
         })
 
     def url(self):
-        return "/{}/index.html".format(self.tagname)
+        return "/tags/{}.html".format(self.tagname)
 
     def get_bundles_by(self, *args, **kwargs):
         return jules.utils.filter_bundles(self.tagged, *args, **kwargs)
