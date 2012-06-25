@@ -1,5 +1,6 @@
 Fabric==1.4
 Jinja2==2.6
+pygments==1.5
 PyYAML
 docutils
 straight.plugin==1.3
