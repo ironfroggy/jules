@@ -108,7 +108,10 @@ class JulesEngine(object):
                         'bundles': self.bundles.values(),
                     })
                     output_ext = bundle.meta.get('output_ext', 'html')
-                    output_path = os.path.join(output_dir, bundle.key) + '.' + output_ext
+                    path = bundle.key
+                    if path.endswith('/'):
+                        path += 'index'
+                    output_path = os.path.join(output_dir, path) + '.' + output_ext
                     ensure_path(os.path.dirname(output_path))
                     with open(output_path, 'w') as out:
                         out.write(r)
@@ -237,9 +240,12 @@ class Bundle(dict):
         if content_filename:
             self.content = ext_plugins[ext].parse(open(content_filename))
 
-    def url(self):
+    def _url(self):
         key = self.key.lstrip('./')
         return '/' + key + ".html"
+
+    def url(self):
+        return self._url().rsplit('index.html', 1)[0]
 
 
 class BundleFactory(Bundle):

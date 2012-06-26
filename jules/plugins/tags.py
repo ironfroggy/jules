@@ -5,8 +5,8 @@ import jules
 
 class TagBundle(jules.Bundle):
 
-    def __init__(self, tagname):
-        super(TagBundle, self).__init__('tags/' + tagname)
+    def __init__(self, key, tagname):
+        super(TagBundle, self).__init__(key)
         self.tagname = tagname
         self.tagged = set()
         self.meta.update({
@@ -14,8 +14,8 @@ class TagBundle(jules.Bundle):
             'render': 'jinja2',
         })
 
-    def url(self):
-        return "/tags/{}.html".format(self.tagname)
+    def _url(self):
+        return "/{}/".format(self.key.strip('/'))
 
     def get_bundles_by(self, *args, **kwargs):
         return jules.utils.filter_bundles(self.tagged, *args, **kwargs)
@@ -33,7 +33,8 @@ def preprocess_bundle(k, bundle, engine):
     tag_bundles = {}
     for tag in bundle.tags:
         if tag not in tags:
-            tag_bundle = TagBundle(tag)
+            key = engine.config.get('tag_path', '{tag}/').format(tag=tag)
+            tag_bundle = TagBundle(key, tag)
             tag_bundles[tag] = tag_bundle
             tags[tag] = tag_bundle
         else:
