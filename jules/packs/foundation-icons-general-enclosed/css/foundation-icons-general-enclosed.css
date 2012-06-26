@@ -1,0 +1,16 @@
+/* Foundation Icons General Enclosed */
+@font-face {
+    font-family: 'FoundationIconsGeneralEnclosed';
+    src: url('../fonts/foundation-icons-general-enclosed.eot');
+    src: url('../fonts/foundation-icons-general-enclosed.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/foundation-icons-general-enclosed.woff') format('woff'),
+         url('../fonts/foundation-icons-general-enclosed.ttf') format('truetype'),
+         url('../fonts/foundation-icons-general-enclosed.svg#FoundationIconsGeneralEnclosed') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+/* CSS to style glyphs */
+.glyph { cursor: default; font-size: 16px; line-height: 1; }
+.glyph.general-enclosed { font-family: "FoundationIconsGeneralEnclosed"; }
