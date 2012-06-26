@@ -44,9 +44,9 @@ def ensure_path(path):
 
 def filter_bundles(from_bundles, order_key=None, order='asc', limit=None, **kwargs):
     if order == 'asc':
-        reverse = False
-    elif order == 'desc':
         reverse = True
+    elif order == 'desc':
+        reverse = False
     else:
         raise ValueError("Order can only be asc or desc")
     bundles = []
