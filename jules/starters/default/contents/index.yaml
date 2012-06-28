@@ -1,0 +1,2 @@
+render: jinja2
+template: index.j2

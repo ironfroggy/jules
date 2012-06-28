@@ -16,6 +16,23 @@ import jules
 from jules.utils import maybe_call, middleware 
 
 
+class Init(Command):
+
+    version = "0.1"
+
+    projectname = Option(dest='projectname', action='store')
+
+    def execute(self, **kwargs):
+        projectname = kwargs["projectname"]
+        if not projectname:
+            print("error: You must specify a project name")
+        elif os.path.exists(projectname):
+            print("error: The path '{}' already exists".format(projectname))
+        else:
+            starter_path = os.path.join(os.path.dirname(jules.__file__), 'starters', 'default')
+            shutil.copytree(starter_path, projectname)
+        
+
 class BuildCommand(Command):
 
     version = "0.2"
@@ -57,6 +74,7 @@ class JulesCommand(Command):
 
     basecopy = SubCommand('build', BuildCommand)
     serve = SubCommand('serve', Serve)
+    init = SubCommand('init', Init)
 
 
 if __name__ == '__main__':
