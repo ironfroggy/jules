@@ -29,7 +29,7 @@
             </span>
             {% endif %}
             </h4>
-            {{ bundle.content|truncate(255)|safe }}
+            {{ bundle.content|truncate(1000)|safe }}
         </article>
     {% endfor %}
 {% endblock %}

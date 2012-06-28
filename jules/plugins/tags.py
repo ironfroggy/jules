@@ -22,6 +22,7 @@ class TagBundle(jules.Bundle):
 
 
 def preprocess_bundle(k, bundle, engine):
+    tags = engine.context.setdefault('tags', {})
     if bundle.meta.get('status') != 'published':
         return
     if 'tags' in bundle.meta:
@@ -29,7 +30,6 @@ def preprocess_bundle(k, bundle, engine):
     else:
         bundle.tags = []
 
-    tags = engine.context.setdefault('tags', {})
     tag_bundles = {}
     for tag in bundle.tags:
         if tag not in tags:
