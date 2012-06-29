@@ -39,7 +39,7 @@ def ensure_path(path):
     path_parts = os.path.split(path)
     for i in xrange(len(path_parts)):
         subpath = os.path.join(*path_parts[: i + 1 ])
-        if not os.path.exists(subpath):
+        if subpath and not os.path.exists(subpath):
             os.mkdir(subpath)
 
 def filter_bundles(from_bundles, order_key=None, order='asc', limit=None, **kwargs):

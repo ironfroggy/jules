@@ -86,6 +86,21 @@ class JulesEngine(object):
     def get_bundles_by(self, *args, **kwargs):
         return filter_bundles(self.bundles.values(), *args, **kwargs)
 
+    def get_bundle(self, *args, **kwargs):
+        bundles = list(self.get_bundles_by(*args, **kwargs))
+        if len(bundles) == 1:
+            return bundles[0]
+        elif bundles:
+            raise ValueError("Found too many bundles! {}".format(
+                " ".join('='.join((k, repr(v)) for (k, v)
+                    in bundles))
+            ))
+        else:
+            raise ValueError("Found no bundles! {}".format(
+                " ".join('='.join((k, repr(v)) for (k, v)
+                    in bundles))
+            ))
+
     def render_site(self, output_dir):
         for k, bundle in self.bundles.items():
             print('render', k, bundle)
@@ -180,6 +195,8 @@ class JulesEngine(object):
             for fn in filenames:
                 base, ext = os.path.splitext(fn)
                 key = os.path.join(directory, base)
+                if key.startswith('./'):
+                    key = key[2:]
                 bundle = self.bundles.setdefault(key, Bundle(key))
                 bundle.add(input_dir, directory, fn)
 
