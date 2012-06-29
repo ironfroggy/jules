@@ -68,7 +68,7 @@ class JulesEngine(object):
             for input_dir, directory, filename in bundle:
                 self.middleware('preprocess_bundle_file',
                     k, input_dir, directory, filename)
-            bundle.prepare_content()
+            bundle.prepare(self)
 
     def add_bundles(self, bundles):
         self._new_bundles.update(bundles)
@@ -104,34 +104,16 @@ class JulesEngine(object):
     def render_site(self, output_dir):
         for k, bundle in self.bundles.items():
             print('render', k, bundle)
-            render = bundle.meta.get('render')
-            if render is not None:
-                if render == 'jinja2':
-                    template_name = bundle.meta.get('template')
-                    template = None
-                    if template_name is not None:
-                        template = self.get_template(template_name)
-                    if template is None:
-                        template_path = bundle.by_ext('j2')
-                        with open(template_path) as f:
-                            template = jinja2.Template(f.read())
-                    r = template.render({
-                        'bundle': bundle,
-                        'meta': bundle.meta,
-                        'engine': self,
-                        'config': self.config,
-                        'bundles': self.bundles.values(),
-                    })
-                    output_ext = bundle.meta.get('output_ext', 'html')
-                    path = bundle.key
-                    if path.endswith('/'):
-                        path += 'index'
-                    output_path = os.path.join(output_dir, path) + '.' + output_ext
-                    ensure_path(os.path.dirname(output_path))
-                    with open(output_path, 'w') as out:
-                        out.write(r)
-                else:
-                    raise ValueError("Uknown renderer {}".format(render))
+            if bundle.template and bundle.output_path:
+                r = bundle.template.render({
+                    'bundle': bundle,
+                    'meta': bundle.meta,
+                    'engine': self,
+                    'config': self.config,
+                    'bundles': self.bundles.values(),
+                })
+                with open(os.path.join(output_dir, bundle.output_path), 'w') as out:
+                    out.write(r)
             else:
                 for input_dir, directory, filename in bundle:
                     src_path = os.path.join(input_dir, directory, filename)
@@ -239,7 +221,42 @@ class Bundle(dict):
     def get_bundles(self):
         return self
 
-    def prepare_content(self):
+    def prepare(self, engine):
+        self._prepare_render(engine)
+        self._prepare_contents()
+
+    def _prepare_render(self, engine):
+        """Prepare the template and output name of a bundle."""
+
+        self.template = None
+        self.output_path = None
+
+        render = self.meta.get('render')
+        if render is not None:
+            if render == 'jinja2':
+                # Prepare template
+                template_name = self.meta.get('template')
+                template = None
+                if template_name is not None:
+                    template = engine.get_template(template_name)
+                if template is None:
+                    template_path = self.by_ext('j2')
+                    with open(template_path) as f:
+                        template = jinja2.Template(f.read())
+                
+                # Prepare output location
+                output_ext = self.meta.get('output_ext', 'html')
+                path = self.key
+                if path.endswith('/'):
+                    path += 'index'
+                output_path = path + '.' + output_ext
+                ensure_path(os.path.dirname(output_path))
+
+                # Save them for later in the rendering stage
+                self.template = template
+                self.output_path = output_path
+
+    def _prepare_contents(self):
         ext_plugins = {}
         for plugin in load('jules.plugins', subclasses=jules.plugins.ContentPlugin):
             for ext in plugin.extensions:
@@ -262,7 +279,9 @@ class Bundle(dict):
         return '/' + key + ".html"
 
     def url(self):
-        return self._url().rsplit('index.html', 1)[0]
+        if self.template and self.output_path:
+            return self._url().rsplit('index.html', 1)[0]
+        return None
 
 
 class BundleFactory(Bundle):
