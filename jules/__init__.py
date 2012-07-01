@@ -92,13 +92,13 @@ class JulesEngine(object):
             return bundles[0]
         elif bundles:
             raise ValueError("Found too many bundles! {}".format(
-                " ".join('='.join((k, repr(v)) for (k, v)
-                    in bundles))
+                " ".join('='.join((k, repr(v))) for (k, v)
+                    in kwargs.items())
             ))
         else:
             raise ValueError("Found no bundles! {}".format(
-                " ".join('='.join((k, repr(v)) for (k, v)
-                    in bundles))
+                " ".join('='.join((k, repr(v))) for (k, v)
+                    in kwargs.items())
             ))
 
     def render_site(self, output_dir):
@@ -257,23 +257,32 @@ class Bundle(dict):
                 self.template = template
                 self.output_path = output_path
 
+    content = None
     def _prepare_contents(self):
         ext_plugins = {}
         for plugin in load('jules.plugins', subclasses=jules.plugins.ContentPlugin):
             for ext in plugin.extensions:
                 ext_plugins[ext] = plugin()
 
-        content_filename = None
+        content_path = None
         if 'content' in self.meta:
-            content_filename = os.path.abspath(os.path.expanduser(self.meta['content']))
+            content_path = os.path.abspath(os.path.expanduser(self.meta['content']))
         else:
             for input_dir, directory, filename in self:
                 for ext in ext_plugins:
                     if filename.endswith(ext):
-                        content_filename = os.path.join(input_dir, directory, filename)
+                        content_path = os.path.join(input_dir, directory, filename)
 
-        if content_filename:
-            self.content = ext_plugins[ext].parse(open(content_filename))
+        if content_path:
+            try:
+                self.content = ext_plugins[ext].parse(open(content_path))
+            except IOError:
+                pass
+        if not self.content:
+            src = self.meta.get('content')
+            if src:
+                self.content = ext_plugins[ext].parse_string(src)
+
 
     def _url(self):
         key = self.key.lstrip('./')

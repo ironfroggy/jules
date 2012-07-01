@@ -56,12 +56,17 @@ def filter_bundles(from_bundles, order_key=None, order='asc', limit=None, **kwar
                 continue
         ok = True
         for k, v in kwargs.iteritems():
-            if k not in bundle.meta:
-                ok = False
-                break
-            if bundle.meta[k] != v:
-                ok = False
-                break
+            if k == 'key':
+                if bundle.key != v:
+                    ok = False
+                    break
+            else:
+                if k not in bundle.meta:
+                    ok = False
+                    break
+                if bundle.meta[k] != v:
+                    ok = False
+                    break
         print ok, bundle
         if ok:
             bundles.append(bundle)
