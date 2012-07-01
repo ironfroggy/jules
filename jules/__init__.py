@@ -112,7 +112,9 @@ class JulesEngine(object):
                     'config': self.config,
                     'bundles': self.bundles.values(),
                 })
-                with open(os.path.join(output_dir, bundle.output_path), 'w') as out:
+                output_path = os.path.join(output_dir, bundle.output_path)
+                ensure_path(os.path.dirname(output_path))
+                with open(output_path, 'w') as out:
                     out.write(r)
             else:
                 for input_dir, directory, filename in bundle:
@@ -250,7 +252,6 @@ class Bundle(dict):
                 if path.endswith('/'):
                     path += 'index'
                 output_path = path + '.' + output_ext
-                ensure_path(os.path.dirname(output_path))
 
                 # Save them for later in the rendering stage
                 self.template = template

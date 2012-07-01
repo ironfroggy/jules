@@ -162,7 +162,7 @@ configured packs, parse your content, collect your posts and tags, and render
 the site to ``_build``.
 
 Finally, if you want to see the site in action, just run the serve command
-after building
+after building.
 
 ::
 
@@ -171,4 +171,30 @@ after building
 And direct your browser to `<http://localhost:8000/>`_ to see it in action.
 
 
+Template API
+============
 
+Within your templates, you'll have access to a few things that let you access
+both the current page being rendered and other pages, as well as information
+about the site itself.
+
+
+``bundle``
+^^^^^^^^^^
+
+The current page being rendered.
+
+``bundle.meta``
+###############
+
+* ``bundle.meta.title``
+* ``bundle.meta.publish_time``
+* ``bundle.meta.created_time``
+* ``bundle.meta.status``
+* ``bundle.meta.tags``
+
+``engine``
+^^^^^^^^^^
+
+``config``
+^^^^^^^^^^
