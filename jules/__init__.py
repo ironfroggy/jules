@@ -6,7 +6,7 @@ import re
 import shutil
 
 import yaml
-from straight.plugin.manager import PluginManager
+from straight.plugin import load
 import jinja2
 
 import jules
@@ -24,7 +24,6 @@ class JulesEngine(object):
         self.bundles = {}
         self._new_bundles = {}
         self.context = {}
-        self.plugins = PluginManager()
         self.config = {}
 
     def load_config(self):
@@ -127,7 +126,7 @@ class JulesEngine(object):
         return self._jinja_env.get_template(name)
 
     def load_plugins(self, ns='jules.plugins'):
-        self.plugins.load(ns)
+        self.plugins = load(ns)
         self.plugins._plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
 
     def middleware(self, method, *args, **kwargs):
@@ -250,8 +249,7 @@ class Bundle(dict):
     content = None
     def _prepare_contents(self):
         ext_plugins = {}
-        content_plugins = PluginManager()
-        content_plugins.load('jules.plugins', subclasses=jules.plugins.ContentPlugin)
+        content_plugins = load('jules.plugins', subclasses=jules.plugins.ContentPlugin)
         for plugin in content_plugins:
             for ext in plugin.extensions:
                 ext_plugins[ext] = plugin()
