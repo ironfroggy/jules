@@ -13,7 +13,6 @@ from straight.command import Command, SubCommand, Option
 from straight.plugin import load
 
 import jules
-from jules.utils import maybe_call, middleware 
 
 
 class Init(Command):

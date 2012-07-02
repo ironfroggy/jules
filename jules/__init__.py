@@ -6,11 +6,11 @@ import re
 import shutil
 
 import yaml
-from straight.plugin import load
+from straight.plugin.manager import PluginManager
 import jinja2
 
 import jules
-from jules.utils import middleware, pipeline, maybe_call, ensure_path, filter_bundles
+from jules.utils import ensure_path, filter_bundles
 
 
 PACKAGE_DIR = os.path.dirname(__file__)
@@ -24,7 +24,7 @@ class JulesEngine(object):
         self.bundles = {}
         self._new_bundles = {}
         self.context = {}
-        self.plugins = []
+        self.plugins = PluginManager()
         self.config = {}
 
     def load_config(self):
@@ -127,18 +127,13 @@ class JulesEngine(object):
         return self._jinja_env.get_template(name)
 
     def load_plugins(self, ns='jules.plugins'):
-        self.plugins = load(ns)
-        self.plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
+        self.plugins.load(ns)
+        self.plugins._plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
 
     def middleware(self, method, *args, **kwargs):
         """Call each loaded plugin with the same method, if it exists."""
         kwargs['engine'] = self
-        results = []
-        for plugin in self.plugins:
-            r = maybe_call(plugin, method, *args, **kwargs)
-            if r is not None:
-                results.append(r)
-        return results
+        return list(self.plugins.call(method, *args, **kwargs))
 
     def pipeline(self, method, first, *args, **kwargs):
         """Call each loaded plugin with the same method, if it exists,
@@ -147,12 +142,7 @@ class JulesEngine(object):
         """
 
         kwargs['engine'] = self
-        r = None
-        for plugin in self.plugins:
-            r = maybe_call(plugin, method, first, *args, **kwargs)
-            if r is not None:
-                first = r
-        return r
+        return self.plugins.pipe(method, first, *args, **kwargs)
 
     def _walk(self):
         for input_dir in self.input_dirs:
@@ -172,7 +162,7 @@ class JulesEngine(object):
                 yield input_dir, directory, f
 
     def find_bundles(self):
-        for bundles in middleware('find_bundles'):
+        for bundles in self.plugins.call('find_bundles'):
             for bundle in bundles:
                 self.bundles[bundle.key] = bundle
         for input_dir, directory, dirnames, filenames in self._walk():
@@ -260,7 +250,9 @@ class Bundle(dict):
     content = None
     def _prepare_contents(self):
         ext_plugins = {}
-        for plugin in load('jules.plugins', subclasses=jules.plugins.ContentPlugin):
+        content_plugins = PluginManager()
+        content_plugins.load('jules.plugins', subclasses=jules.plugins.ContentPlugin)
+        for plugin in content_plugins:
             for ext in plugin.extensions:
                 ext_plugins[ext] = plugin()
 

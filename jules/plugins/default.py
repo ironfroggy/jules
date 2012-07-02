@@ -5,8 +5,6 @@ import os
 
 import yaml
 
-from jules.utils import maybe_call, middleware
-
 
 plugin_order = -100
 
