@@ -32,7 +32,7 @@ class Init(Command):
             shutil.copytree(starter_path, projectname)
         
 
-class BuildCommand(Command):
+class Build(Command):
 
     version = "0.2"
 
@@ -55,13 +55,15 @@ class Serve(Command):
     port = Option(dest='port', default=8000)
 
     def execute(self, port, **kwargs):
+        output_dir = self.parent.args['output']
+
         import SimpleHTTPServer
         import SocketServer
 
         Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
         httpd = SocketServer.TCPServer(("", port), Handler)
 
-        os.chdir('_build')
+        os.chdir(output_dir)
         httpd.serve_forever()
 
 
@@ -71,7 +73,7 @@ class JulesCommand(Command):
 
     output = Option(short='-o', long='--output', dest='output', nargs=1, default='_build')
 
-    basecopy = SubCommand('build', BuildCommand)
+    basecopy = SubCommand('build', Build)
     serve = SubCommand('serve', Serve)
     init = SubCommand('init', Init)
 
