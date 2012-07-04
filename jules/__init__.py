@@ -31,6 +31,8 @@ class JulesEngine(object):
         if os.path.exists(config_path):
             with open(config_path) as f:
                 self.config.update(yaml.load(f))
+        else:
+            raise ValueError("No configuration file found. Looking for site.yaml at `{}`.".format(self.src_path))
 
     def prepare(self):
         self.load_config()
