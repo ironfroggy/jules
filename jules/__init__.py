@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 import re
 import shutil
+from fnmatch import fnmatch
 
 import yaml
 from straight.plugin import load
@@ -168,12 +169,16 @@ class JulesEngine(object):
                 self.bundles[bundle.key] = bundle
         for input_dir, directory, dirnames, filenames in self._walk():
             for fn in filenames:
-                base, ext = os.path.splitext(fn)
-                key = os.path.join(directory, base)
-                if key.startswith('./'):
-                    key = key[2:]
-                bundle = self.bundles.setdefault(key, Bundle(key))
-                bundle.add(input_dir, directory, fn)
+                for ignore_pattern in self.config.get('ignore', ()):
+                    if fnmatch(fn, ignore_pattern):
+                        break
+                else:
+                    base, ext = os.path.splitext(fn)
+                    key = os.path.join(directory, base)
+                    if key.startswith('./'):
+                        key = key[2:]
+                    bundle = self.bundles.setdefault(key, Bundle(key))
+                    bundle.add(input_dir, directory, fn)
 
     def find_file(self, filepath):
         filepath = os.path.relpath(filepath)
