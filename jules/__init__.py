@@ -164,6 +164,7 @@ class JulesEngine(object):
                 yield input_dir, directory, f
 
     def find_bundles(self):
+        defaults = self.config.get('bundle_defaults', {})
         for bundles in self.plugins.call('find_bundles'):
             for bundle in bundles:
                 self.bundles[bundle.key] = bundle
@@ -177,7 +178,7 @@ class JulesEngine(object):
                     key = os.path.join(directory, base)
                     if key.startswith('./'):
                         key = key[2:]
-                    bundle = self.bundles.setdefault(key, Bundle(key))
+                    bundle = self.bundles.setdefault(key, Bundle(key, defaults.copy()))
                     bundle.add(input_dir, directory, fn)
 
     def find_file(self, filepath):
@@ -191,12 +192,20 @@ class JulesEngine(object):
 
 class Bundle(dict):
 
-    def __init__(self, key):
+    def __init__(self, key, defaults=None):
         self.key = key
         self.entries = []
         self._files_by_ext = {}
+        self._metadefaults = defaults or {}
 
-    meta = property(lambda self: self.setdefault('meta', {}))
+    @property
+    def meta(self):
+        if self._metadefaults is not None:
+            cur_meta = self.get('meta', {})
+            self['meta'] = self._metadefaults
+            self['meta'].update(cur_meta)
+            self._metadefaults = None
+        return self['meta']
 
     def __hash__(self):
         return hash(self.key)
@@ -247,7 +256,10 @@ class Bundle(dict):
                 path = self.key
                 if path.endswith('/'):
                     path += 'index'
-                output_path = path + '.' + output_ext
+                if output_ext:
+                    output_path = path + '.' + output_ext
+                else:
+                    output_path = path
 
                 # Save them for later in the rendering stage
                 self.template = template
@@ -283,7 +295,10 @@ class Bundle(dict):
 
     def _url(self):
         key = self.key.lstrip('./')
-        return '/' + key + ".html"
+        ext = self.meta.get('output_ext', 'html')
+        if ext:
+            ext = '.' + ext
+        return '/' + key + ext
 
     def url(self):
         if self.template and self.output_path:

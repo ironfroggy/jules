@@ -61,7 +61,7 @@ class Serve(Command):
         import SocketServer
 
         Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
-        httpd = SocketServer.TCPServer(("", port), Handler)
+        httpd = SocketServer.TCPServer(("", int(port)), Handler)
 
         os.chdir(output_dir)
         httpd.serve_forever()
