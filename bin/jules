@@ -60,8 +60,9 @@ class Serve(Command):
         import SimpleHTTPServer
         import SocketServer
 
-        Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
-        httpd = SocketServer.TCPServer(("", int(port)), Handler)
+        handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+        handler.extensions_map[''] = 'text/html'
+        httpd = SocketServer.TCPServer(("", int(port)), handler)
 
         os.chdir(output_dir)
         httpd.serve_forever()

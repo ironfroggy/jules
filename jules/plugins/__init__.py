@@ -1,2 +1,4 @@
 class ContentPlugin(object):
-    pass
+
+    def __init__(self, engine):
+        self.engine = engine

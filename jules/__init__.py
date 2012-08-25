@@ -230,7 +230,7 @@ class Bundle(dict):
 
     def prepare(self, engine):
         self._prepare_render(engine)
-        self._prepare_contents()
+        self._prepare_contents(engine)
 
     def _prepare_render(self, engine):
         """Prepare the template and output name of a bundle."""
@@ -266,12 +266,12 @@ class Bundle(dict):
                 self.output_path = output_path
 
     content = None
-    def _prepare_contents(self):
+    def _prepare_contents(self, engine):
         ext_plugins = {}
         content_plugins = load('jules.plugins', subclasses=jules.plugins.ContentPlugin)
         for plugin in content_plugins:
             for ext in plugin.extensions:
-                ext_plugins[ext] = plugin()
+                ext_plugins[ext] = plugin(engine)
 
         content_path = None
         if 'content' in self.meta:
@@ -281,6 +281,9 @@ class Bundle(dict):
                 for ext in ext_plugins:
                     if filename.endswith(ext):
                         content_path = os.path.join(input_dir, directory, filename)
+                        break
+
+        content_parser = ext_plugins[ext]
 
         if content_path:
             try:
