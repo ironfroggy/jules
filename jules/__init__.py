@@ -190,6 +190,30 @@ class JulesEngine(object):
         return None, None
 
 
+class _BundleMeta(object):
+    def __init__(self, defaults, meta):
+        self.defaults = defaults
+        self.meta = meta
+    def __contains__(self, key):
+        return key in self.meta or key in self.defaults
+    def __getitem__(self, key):
+        try:
+            return self.meta[key]
+        except KeyError:
+            return self.defaults[key]
+    def __setitem__(self, key, value):
+        self.meta[key] = value
+    def __delitem__(self, key):
+        del self.meta[key]
+    def get(self, key, default=None):
+        try:
+            value = self.meta.get(key, default)
+        except KeyError:
+            value = self.defaults.get(key, default)
+        return value
+    def update(self, data):
+        self.meta.update(data)
+
 class Bundle(dict):
 
     def __init__(self, key, defaults=None):
@@ -198,14 +222,25 @@ class Bundle(dict):
         self._files_by_ext = {}
         self._metadefaults = defaults or {}
 
+    _meta = None
     @property
     def meta(self):
-        if self._metadefaults is not None:
-            cur_meta = self.get('meta', {})
-            self['meta'] = self._metadefaults
-            self['meta'].update(cur_meta)
-            self._metadefaults = None
-        return self['meta']
+        if self._meta is None:
+            yaml_filename = self.by_ext('yaml')
+            if yaml_filename:
+                data = yaml.load(open(yaml_filename))
+            else:
+                data = {}
+            self._meta = _BundleMeta(self._metadefaults, data)
+        return self._meta
+
+    def write_meta(self):
+        yaml_filename = self.by_ext('yaml')
+        yaml.dump(
+            self._meta.meta,
+            open(yaml_filename, 'w'),
+            default_flow_style=False,
+            )
 
     def __hash__(self):
         return hash(self.key)

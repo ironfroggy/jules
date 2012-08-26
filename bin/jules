@@ -6,6 +6,7 @@ import os
 import shutil
 import operator
 import itertools
+from datetime import datetime
 
 import yaml
 
@@ -68,6 +69,23 @@ class Serve(Command):
         httpd.serve_forever()
 
 
+class UpdateBundle(Command):
+
+    key = Option(dest='key')
+
+    def execute(self, key, **kwargs):
+        engine = jules.JulesEngine(os.path.abspath('.'))
+        engine.prepare()
+        engine.prepare_bundles()
+
+        bundle = engine.get_bundle(key=key)
+        bundle.meta['updated_date'] = datetime.now()
+        bundle.write_meta()
+
+        label = bundle.meta.get('title', key)
+        print("Bundle %s updated at %s" % (label, bundle.meta['updated_date']))
+
+
 class JulesCommand(Command):
 
     version = "0.2"
@@ -77,6 +95,7 @@ class JulesCommand(Command):
     basecopy = SubCommand('build', Build)
     serve = SubCommand('serve', Serve)
     init = SubCommand('init', Init)
+    update = SubCommand('update', UpdateBundle)
 
 
 if __name__ == '__main__':
