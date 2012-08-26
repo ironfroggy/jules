@@ -21,6 +21,11 @@ class TagBundle(jules.Bundle):
         return jules.utils.filter_bundles(self.tagged, *args, **kwargs)
 
 
+def find_bundles():
+    tag_bundle = jules.BundleFactory('tags/{tag}')
+    return [tag_bundle]
+
+
 def preprocess_bundle(k, bundle, engine):
     tags = engine.context.setdefault('tags', {})
     if bundle.meta.get('status') != 'published':
@@ -42,8 +47,3 @@ def preprocess_bundle(k, bundle, engine):
         tag_bundle.tagged.add(bundle)
     if tag_bundles:
         engine.add_bundles(tag_bundles)
-
-
-def find_bundles():
-    tag_bundle = jules.BundleFactory('tags/{tag}')
-    return [tag_bundle]

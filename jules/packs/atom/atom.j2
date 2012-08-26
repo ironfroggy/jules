@@ -18,8 +18,7 @@
 
     <id>atom-feed</id>
 
-    {% for bundle in bundles %}
-    {% if bundle.meta.status == 'published' %}
+    {% for bundle in engine.get_bundles_by("publish_time", "desc", status="published") %}
         <entry>
             <title type="html">{{ bundle.meta.title }}</title>
             <author><name>{{ bundle.meta.author|escape or config.default_author|escape }}</name></author>
@@ -37,6 +36,5 @@
                 {{ bundle.content }}
             </content>
         </entry>
-    {% endif %}
     {% endfor %}
 </feed>

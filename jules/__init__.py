@@ -106,24 +106,7 @@ class JulesEngine(object):
     def render_site(self, output_dir):
         for k, bundle in self.bundles.items():
             print('render', k, bundle)
-            if bundle.template and bundle.output_path:
-                r = bundle.template.render({
-                    'bundle': bundle,
-                    'meta': bundle.meta,
-                    'engine': self,
-                    'config': self.config,
-                    'bundles': self.bundles.values(),
-                })
-                output_path = os.path.join(output_dir, bundle.output_path)
-                ensure_path(os.path.dirname(output_path))
-                with open(output_path, 'w') as out:
-                    out.write(r)
-            else:
-                for input_dir, directory, filename in bundle:
-                    src_path = os.path.join(input_dir, directory, filename)
-                    dest_path = os.path.join(output_dir, directory, filename)
-                    ensure_path(os.path.dirname(dest_path))
-                    shutil.copy(src_path, dest_path)
+            bundle.render(self, output_dir)
 
     def get_template(self, name):
         return self._jinja_env.get_template(name)
@@ -306,6 +289,31 @@ class Bundle(dict):
                 # Save them for later in the rendering stage
                 self.template = template
                 self.output_path = output_path
+
+    def render(self, engine, output_dir):
+        """Render the bundle into the output directory."""
+
+        # If there is a template and path, render it
+        if self.template and self.output_path:
+            r = self.template.render({
+                'bundle': self,
+                'meta': self.meta,
+                'engine': engine,
+                'config': engine.config,
+                'bundles': engine.bundles.values(),
+            })
+            output_path = os.path.join(output_dir, self.output_path)
+            ensure_path(os.path.dirname(output_path))
+            with open(output_path, 'w') as out:
+                out.write(r)
+
+        # If nothing to render, copy everything
+        else:
+            for input_dir, directory, filename in self:
+                src_path = os.path.join(input_dir, directory, filename)
+                dest_path = os.path.join(output_dir, directory, filename)
+                ensure_path(os.path.dirname(dest_path))
+                shutil.copy(src_path, dest_path)
 
     content = None
     def _prepare_contents(self, engine):
