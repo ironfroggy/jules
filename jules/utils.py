@@ -35,7 +35,6 @@ def filter_bundles(from_bundles, order_key=None, order='asc', limit=None, **kwar
                 if bundle.meta[k] != v:
                     ok = False
                     break
-        print ok, bundle
         if ok:
             bundles.append(bundle)
     if order_key is not None:

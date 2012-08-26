@@ -16,6 +16,10 @@ from straight.plugin import load
 import jules
 
 
+def now_minute():
+    return datetime.now().replace(second=0, microsecond=0)
+
+
 class Init(Command):
 
     version = "0.1"
@@ -69,7 +73,48 @@ class Serve(Command):
         httpd.serve_forever()
 
 
+class BundleMeta(Command):
+
+    key = Option(dest='key')
+    prop = Option(dest='prop', default=None)
+    value = Option(dest='value', default=None)
+
+    def execute(self, key, prop, value, **kwargs):
+        engine = jules.JulesEngine(os.path.abspath('.'))
+        engine.prepare()
+        engine.prepare_bundles()
+
+        bundle = engine.get_bundle(key=key)
+        label = bundle.meta.get('title', key)
+        print("Bundle %s" % label)
+        if prop:
+            if value is not None:
+                bundle.meta[prop] = value
+            print("%s = %s" % (prop, bundle.meta.get(prop)))
+        else:
+            for prop in bundle.meta:
+                print("%s = %s" % (prop, bundle.meta.get(prop)))
+
+
 class UpdateBundle(Command):
+
+    key = Option(dest='key')
+    prop = Option(dest='prop', default='updated_time')
+
+    def execute(self, key, prop, **kwargs):
+        engine = jules.JulesEngine(os.path.abspath('.'))
+        engine.prepare()
+        engine.prepare_bundles()
+
+        bundle = engine.get_bundle(key=key)
+        label = bundle.meta.get('title', key)
+
+        bundle.meta[prop] = now_minute()
+        bundle.write_meta()
+        print("Bundle %s updated at %s" % (label, bundle.meta['updated_time']))
+
+
+class PublishBundle(Command):
 
     key = Option(dest='key')
 
@@ -79,12 +124,14 @@ class UpdateBundle(Command):
         engine.prepare_bundles()
 
         bundle = engine.get_bundle(key=key)
-        bundle.meta['updated_date'] = datetime.now()
+        meta = bundle.meta
+        label = meta.get('title', key)
+
+        meta['publish_time'] = now_minute()
+        meta['updated_time'] = meta['publish_time'].replace()
+        meta['status'] = 'published'
         bundle.write_meta()
-
-        label = bundle.meta.get('title', key)
-        print("Bundle %s updated at %s" % (label, bundle.meta['updated_date']))
-
+        print("Bundle %s updated at %s" % (label, meta['updated_time']))
 
 class JulesCommand(Command):
 
@@ -96,6 +143,8 @@ class JulesCommand(Command):
     serve = SubCommand('serve', Serve)
     init = SubCommand('init', Init)
     update = SubCommand('update', UpdateBundle)
+    meta = SubCommand('meta', BundleMeta)
+    publish = SubCommand('publish', PublishBundle)
 
 
 if __name__ == '__main__':

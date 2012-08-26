@@ -205,6 +205,8 @@ class _BundleMeta(object):
         self.meta[key] = value
     def __delitem__(self, key):
         del self.meta[key]
+    def __iter__(self):
+        return iter(self.meta)
     def get(self, key, default=None):
         try:
             value = self.meta.get(key, default)
@@ -233,6 +235,11 @@ class Bundle(dict):
                 data = {}
             self._meta = _BundleMeta(self._metadefaults, data)
         return self._meta
+
+    @property
+    def recent(self):
+        M = self.meta
+        return M['updated_time'] or M['publish_time'] or M['created_time']
 
     def write_meta(self):
         yaml_filename = self.by_ext('yaml')
