@@ -23,6 +23,7 @@ def now_minute():
 class Init(Command):
 
     version = "0.1"
+    help = "Create a new site based on a starter template."
 
     projectname = Option(dest='projectname', action='store')
 
@@ -41,6 +42,8 @@ class Build(Command):
 
     version = "0.2"
 
+    help = "Build the site, rendering all the bundles found."
+
     force = Option(short='-f', dest='force', action='store_true')
 
     def execute(self, **kwargs):
@@ -58,6 +61,8 @@ class Build(Command):
 class Serve(Command):
 
     port = Option(dest='port', default=8000)
+    
+    help = "Serve the site from the output directing, using a test server. Defaults to port 8000"
 
     def execute(self, port, **kwargs):
         output_dir = self.parent.args['output']
@@ -74,6 +79,12 @@ class Serve(Command):
 
 
 class BundleMeta(Command):
+    """Update or view meta data for a bundle.
+
+    If no property is specified, all are shown.
+    If property is specified, but not value, the current value is shown.
+    If property and value are specified, it is changed.
+    """
 
     key = Option(dest='key')
     prop = Option(dest='prop', default=None)
@@ -97,6 +108,7 @@ class BundleMeta(Command):
 
 
 class UpdateBundle(Command):
+    """Sets a datetime meta property to the current time."""
 
     key = Option(dest='key')
     prop = Option(dest='prop', default='updated_time')
@@ -115,6 +127,7 @@ class UpdateBundle(Command):
 
 
 class PublishBundle(Command):
+    """Sets the publish_time and updated_time and sets status as "published"."""
 
     key = Option(dest='key')
 
@@ -137,7 +150,7 @@ class JulesCommand(Command):
 
     version = "0.2"
 
-    output = Option(short='-o', long='--output', dest='output', nargs=1, default='_build')
+    output = Option(short='-o', long='--output', dest='output', nargs=1, default='_build', help="The destination directory to build to")
 
     basecopy = SubCommand('build', Build)
     serve = SubCommand('serve', Serve)
