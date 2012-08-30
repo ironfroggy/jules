@@ -192,9 +192,12 @@ class _BundleMeta(object):
         return iter(self.meta)
     def get(self, key, default=None):
         try:
-            value = self.meta.get(key, default)
+            value = self.meta[key]
         except KeyError:
-            value = self.defaults.get(key, default)
+            try:
+                value = self.defaults[key]
+            except KeyError:
+                value = default
         return value
     def update(self, data):
         self.meta.update(data)
