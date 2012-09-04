@@ -294,29 +294,38 @@ class Bundle(dict):
                 self.output_path = output_path
 
     def render(self, engine, output_dir):
+        self._render_with(engine, output_dir, self.template, self.output_path)
+
+    def _render_with(self, engine, output_dir, template, output_path):
         """Render the bundle into the output directory."""
 
         # If there is a template and path, render it
-        if self.template and self.output_path:
-            r = self.template.render({
+        if template and output_path:
+            r = template.render({
                 'bundle': self,
                 'meta': self.meta,
                 'engine': engine,
                 'config': engine.config,
                 'bundles': engine.bundles.values(),
             })
-            output_path = os.path.join(output_dir, self.output_path)
+            output_path = os.path.join(output_dir, output_path)
             ensure_path(os.path.dirname(output_path))
             with open(output_path, 'w') as out:
                 out.write(r)
 
-        # If nothing to render, copy everything
+        # If nothing to render, allow the bundle to copy content
         else:
-            for input_dir, directory, filename in self:
+            for input_dir, directory, filename in self.to_copy(engine):
                 src_path = os.path.join(input_dir, directory, filename)
                 dest_path = os.path.join(output_dir, directory, filename)
                 ensure_path(os.path.dirname(dest_path))
                 shutil.copy(src_path, dest_path)
+
+    def to_copy(self, engine):
+        for input_dir, directory, filename in self:
+            for ignore_pattern in engine.config.get('ignore', ()):
+                if not fnmatch(filename, ignore_pattern):
+                    yield (input_dir, directory, filename)
 
     content = None
     def _prepare_contents(self, engine):

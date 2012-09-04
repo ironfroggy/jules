@@ -14,6 +14,15 @@ class TagBundle(jules.Bundle):
             'render': 'jinja2',
         })
 
+    def render(self, engine, output_dir):
+        """Tags have a side-effect of rendering a tag-specific feed."""
+
+        super(TagBundle, self).render(engine, output_dir)
+        self._render_with(engine, output_dir,
+            engine.get_template("atom.j2"),
+            "tags/{}.xml".format(self.tagname),
+            )
+
     def _url(self):
         return "/{}/".format(self.key.strip('/'))
 
