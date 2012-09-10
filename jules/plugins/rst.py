@@ -12,10 +12,6 @@ class RstContentParser(ContentPlugin):
 
     extensions = ('.rst',)
     
-    def parse(self, content_file):
-        src = content_file.read()
-        return self.parse_string(src)
-
     def parse_string(self, src):
         parts = publish_parts(source=src, writer_name='html',
             settings_overrides={'jules': self.engine})
