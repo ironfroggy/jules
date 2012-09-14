@@ -11,6 +11,7 @@ from straight.plugin import load
 import jinja2
 
 import jules
+import jules.filters
 from jules.utils import ensure_path, filter_bundles
 
 
@@ -49,6 +50,9 @@ class JulesEngine(object):
         self._jinja_env = jinja2.Environment(
             loader = jinja2.loaders.FileSystemLoader(self.input_dirs),
         )
+        for filter_name in dir(jules.filters):
+            if not filter_name.startswith('_'):
+                self._jinja_env.filters[filter_name] = getattr(jules.filters, filter_name)
 
         def key(filename):
             d = re.search(r'^(\d+)', filename)
@@ -76,14 +80,16 @@ class JulesEngine(object):
         self._new_bundles.update(bundles)
 
     def walk_bundles(self):
+        for k, b in self.bundles.iteritems():
+            yield k, b
         first = True
         while first or self._new_bundles:
             first = False
             if self._new_bundles:
                 self.bundles.update(self._new_bundles)
+                for k, b in self._new_bundles.iteritems():
+                    yield k, b
                 self._new_bundles = {}
-            for k, b in self.bundles.iteritems():
-                yield k, b
 
     def get_bundles_by(self, *args, **kwargs):
         return filter_bundles(self.bundles.values(), *args, **kwargs)
@@ -190,6 +196,8 @@ class _BundleMeta(object):
         del self.meta[key]
     def __iter__(self):
         return iter(self.meta)
+    def keys(self):
+        return self.meta.keys()
     def get(self, key, default=None):
         try:
             value = self.meta[key]
@@ -197,6 +205,16 @@ class _BundleMeta(object):
             try:
                 value = self.defaults[key]
             except KeyError:
+                value = default
+        return value
+    def setdefault(self, key, default=None):
+        try:
+            value = self.meta[key]
+        except KeyError:
+            try:
+                value = self.defaults[key]
+            except KeyError:
+                self.meta[key] = default
                 value = default
         return value
     def update(self, data):
@@ -209,6 +227,12 @@ class Bundle(dict):
         self.entries = []
         self._files_by_ext = {}
         self._metadefaults = defaults or {}
+
+    def __hash__(self):
+        return hash((type(self), self.key))
+
+    def __str__(self):
+        return u'Bundle(key=%r)' % (self.key,)
 
     _meta = None
     @property
@@ -301,13 +325,16 @@ class Bundle(dict):
 
         # If there is a template and path, render it
         if template and output_path:
-            r = template.render({
+            ctx = {}
+            ctx.update(engine.context)
+            ctx.update({
                 'bundle': self,
                 'meta': self.meta,
                 'engine': engine,
                 'config': engine.config,
                 'bundles': engine.bundles.values(),
             })
+            r = template.render(ctx)
             output_path = os.path.join(output_dir, output_path)
             ensure_path(os.path.dirname(output_path))
             with open(output_path, 'w') as out:
