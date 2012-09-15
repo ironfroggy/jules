@@ -228,9 +228,6 @@ class Bundle(dict):
         self._files_by_ext = {}
         self._metadefaults = defaults or {}
 
-    def __hash__(self):
-        return hash((type(self), self.key))
-
     def __str__(self):
         return u'Bundle(key=%r)' % (self.key,)
 

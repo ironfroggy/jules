@@ -33,6 +33,7 @@ class Collection(jules.Bundle):
         self.rule = rule
         self.group_by_property = group_by_property
         self.value = value
+
         self._meta = meta
 
         self.bundles = set()
@@ -69,7 +70,8 @@ class Collector(object):
         self.collections = {}
 
         # Load shared config for collections
-        self.meta = engine.config['collections'][name].get('meta', {})
+        collection_meta = engine.config['collections'][name].get('meta', {})
+        self.meta = jules._BundleMeta(engine.config.get('bundle_defaults', {}), collection_meta)
 
     def collect(self, rule, group_by_property, bundle):
         """Collect the bungle if it is a proper candidate for the collection.
@@ -100,7 +102,9 @@ class Collector(object):
                         key: collection,
                     })
                     self.collections[value] = collection
-                    collection[bundle.key] = bundle
+                else:
+                    collection = self.collections[value]
+                collection[bundle.key] = bundle
             # All bundles need a copy of this collection
             for colkey, collection in self.collections.items():
                 for value in values:
