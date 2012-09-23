@@ -1,2 +1,3 @@
 output_ext: "xml"
 render: jinja2
+template: atom.j2

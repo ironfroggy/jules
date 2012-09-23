@@ -18,19 +18,28 @@
 
     <id>atom-feed</id>
 
+    {% set term = bundle.value %}
+
     {% for bundle in engine.get_bundles_by("publish_time", "desc", status="published") %}
         <entry>
             <title type="html">{{ bundle.meta.title }}</title>
             <author><name>{{ bundle.meta.author|escape or config.default_author|escape }}</name></author>
-            <link href="http://{{ config.domain }}{{ bundle.url() }}"/>
+            <link href="http://{{ config.domain }}{{ bundle.url() }}?utm_source=subscriber&utm_medium=feed&utm_term={{ term }}&utm_campaign={{config.feed_campaign.name}}"/>
             <updated>{{ bundle.meta.publish_date }}</updated>
             <published>{{ bundle.meta.publish_date }}</published>
             <id>{{ bundle.key }}</id>
             {% for tag in bundle.meta.tags %}
-            <category   scheme="blog/tags"
-                        term="{{tag}}"
-                        label="{{ tag|title }}" />
+                <category
+                    scheme="blog/tags"
+                    term="{{tag}}"
+                    label="{{ tag|title }}" />
             {% endfor %}
+            {% if bundle.value %}
+                <category
+                    scheme="blog/tags"
+                    term="{{tag}}"
+                    label="{{ tag|title }}" />
+            {% endif %}
 
             <content type="html">
                 {{ bundle.content }}
