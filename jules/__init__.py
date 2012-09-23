@@ -295,10 +295,11 @@ class Bundle(dict):
                 template = None
                 if template_name is not None:
                     template = engine.get_template(template_name)
-                if template is None:
-                    template_path = self.by_ext('j2')
-                    with open(template_path) as f:
-                        template = jinja2.Template(f.read())
+                #if template is None:
+                #    template_path = self.by_ext('j2')
+                #    if template_path:
+                #        with open(template_path) as f:
+                #            template = jinja2.Template(f.read())
                 
                 # Prepare output location
                 output_ext = self.meta.get('output_ext', 'html')
