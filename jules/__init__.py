@@ -335,6 +335,8 @@ class Bundle(dict):
             r = template.render(ctx)
             output_path = os.path.join(output_dir, output_path)
             ensure_path(os.path.dirname(output_path))
+            if os.path.exists(output_path) and os.path.isdir(output_path):
+                output_path = os.path.join(output_path, 'index.html')
             with open(output_path, 'w') as out:
                 out.write(r)
 
