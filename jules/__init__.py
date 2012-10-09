@@ -29,6 +29,8 @@ class JulesEngine(object):
         self.config = {}
 
     def load_config(self):
+        """Populates engine.config with the site configuration."""
+
         config_path = os.path.join(self.src_path, 'site.yaml')
         if os.path.exists(config_path):
             with open(config_path) as f:
@@ -37,6 +39,8 @@ class JulesEngine(object):
             raise ValueError("No configuration file found. Looking for site.yaml at `{}`.".format(self.src_path))
 
     def prepare(self):
+        """Prepare a site by loading configuration, plugins, packs, and bundles."""
+
         self.load_config()
         self.load_plugins()
 
@@ -68,91 +72,9 @@ class JulesEngine(object):
 
         self.find_bundles()
 
-    def prepare_bundles(self):
-        for k, bundle in self.walk_bundles():
-            self.middleware('preprocess_bundle', k, bundle)
-            for input_dir, directory, filename in bundle:
-                self.middleware('preprocess_bundle_file',
-                    k, input_dir, directory, filename)
-            bundle.prepare(self)
-
-    def add_bundles(self, bundles):
-        self._new_bundles.update(bundles)
-
-    def walk_bundles(self):
-        for k, b in self.bundles.iteritems():
-            yield k, b
-        first = True
-        while first or self._new_bundles:
-            first = False
-            if self._new_bundles:
-                self.bundles.update(self._new_bundles)
-                for k, b in self._new_bundles.iteritems():
-                    yield k, b
-                self._new_bundles = {}
-
-    def get_bundles_by(self, *args, **kwargs):
-        return filter_bundles(self.bundles.values(), *args, **kwargs)
-
-    def get_bundle(self, *args, **kwargs):
-        bundles = list(self.get_bundles_by(*args, **kwargs))
-        if len(bundles) == 1:
-            return bundles[0]
-        elif bundles:
-            raise ValueError("Found too many bundles! {}".format(
-                " ".join('='.join((k, repr(v))) for (k, v)
-                    in kwargs.items())
-            ))
-        else:
-            raise ValueError("Found no bundles! {}".format(
-                " ".join('='.join((k, repr(v))) for (k, v)
-                    in kwargs.items())
-            ))
-
-    def render_site(self, output_dir):
-        for k, bundle in self.bundles.items():
-            print('render', k, bundle)
-            bundle.render(self, output_dir)
-
-    def get_template(self, name):
-        return self._jinja_env.get_template(name)
-
-    def load_plugins(self, ns='jules.plugins'):
-        self.plugins = load(ns)
-        self.plugins._plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
-
-    def middleware(self, method, *args, **kwargs):
-        """Call each loaded plugin with the same method, if it exists."""
-        kwargs['engine'] = self
-        return list(self.plugins.call(method, *args, **kwargs))
-
-    def pipeline(self, method, first, *args, **kwargs):
-        """Call each loaded plugin with the same method, if it exists,
-        passing the return value of each as the first argument of the
-        next.
-        """
-
-        kwargs['engine'] = self
-        return self.plugins.pipe(method, first, *args, **kwargs)
-
-    def _walk(self):
-        for input_dir in self.input_dirs:
-            for directory, dirnames, filenames in os.walk(input_dir):
-                directory = os.path.relpath(directory, input_dir)
-
-                yield (input_dir, directory, dirnames, filenames)
-
-    def walk_input_directories(self):
-        for input_dir, directory, dirnames, filenames in self._walk():
-            for d in dirnames:
-                yield input_dir, directory, d
-
-    def walk_input_files(self):
-        for input_dir, directory, dirnames, filenames in self._walk():
-            for f in filenames:
-                yield input_dir, directory, f
-
     def find_bundles(self):
+        """Find all bundles in the input directories, load them, and prepare them."""
+
         defaults = self.config.get('bundle_defaults', {})
         for bundles in self.plugins.call('find_bundles'):
             for bundle in bundles:
@@ -170,16 +92,121 @@ class JulesEngine(object):
                     bundle = self.bundles.setdefault(key, Bundle(key, defaults.copy()))
                     bundle.add(input_dir, directory, fn)
 
-    def find_file(self, filepath):
-        filepath = os.path.relpath(filepath)
-        for k in self.bundles:
-            for input_dir, directory, filename in self.bundles[k]:
-                if filepath == os.path.relpath(os.path.join(directory, filename)):
-                    return self.bundles[k], os.path.join(input_dir, directory, filename)
-        return None, None
+        self.prepare_bundles()
+
+    def _walk(self):
+        for input_dir in self.input_dirs:
+            for directory, dirnames, filenames in os.walk(input_dir):
+                directory = os.path.relpath(directory, input_dir)
+
+                yield (input_dir, directory, dirnames, filenames)
+
+    def prepare_bundles(self):
+        """Prepare the bundles, allow plugins to process them."""
+
+        for k, bundle in self.walk_bundles():
+            self.middleware('preprocess_bundle', k, bundle)
+            for input_dir, directory, filename in bundle:
+                self.middleware('preprocess_bundle_file',
+                    k, input_dir, directory, filename)
+            bundle.prepare(self)
+
+    def add_bundles(self, bundles):
+        """Add additional bundles into the engine, mapping key->bundle."""
+
+        self._new_bundles.update(bundles)
+
+    def walk_bundles(self):
+        """Iterate over (key, bundle) pairs in the engine, continuing to yield
+        new bundles if they are added to the engine during the process of
+        walking over the bundles.
+        """
+
+        for k, b in self.bundles.iteritems():
+            yield k, b
+        first = True
+        while first or self._new_bundles:
+            first = False
+            if self._new_bundles:
+                self.bundles.update(self._new_bundles)
+                for k, b in self._new_bundles.iteritems():
+                    yield k, b
+                self._new_bundles = {}
+
+    def get_bundles_by(self, *args, **kwargs):
+        """Find bundles in the engine filtered and ordered as needed.
+        
+        order_key: The name of a meta field to order the results by
+        order: 'asc' or 'desc' (default: 'asc')
+        limit: The number of resuls to return (default: unlimited)
+        
+        Any additional keyword arguments are taken as meta field values
+        which bundles must match in order to be matched.
+
+        For example, to find all published bundles and give the most recent
+        first:
+
+            engine.get_bundles_by('updated_time', 'desc', status='published')
+        """
+
+        return filter_bundles(self.bundles.values(), *args, **kwargs)
+
+    def get_bundle(self, *args, **kwargs):
+        """With the same parameters as get_bundles_by() find exactly one
+        bundle, and raise an exception if 0 or more than 1 are found.
+        """
+
+        bundles = list(self.get_bundles_by(*args, **kwargs))
+        if len(bundles) == 1:
+            return bundles[0]
+        elif bundles:
+            raise ValueError("Found too many bundles! {}".format(
+                " ".join('='.join((k, repr(v))) for (k, v)
+                    in kwargs.items())
+            ))
+        else:
+            raise ValueError("Found no bundles! {}".format(
+                " ".join('='.join((k, repr(v))) for (k, v)
+                    in kwargs.items())
+            ))
+
+    def render_site(self, output_dir):
+        """Render all bundles to the output directory."""
+
+        for k, bundle in self.bundles.items():
+            print('render', k, bundle)
+            bundle.render(self, output_dir)
+
+    def get_template(self, name):
+        """Load one template by name."""
+
+        return self._jinja_env.get_template(name)
+
+    def load_plugins(self, ns='jules.plugins'):
+        """Load engine plugins, and sort them by their plugin_order attribute."""
+
+        self.plugins = load(ns)
+        self.plugins._plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
+
+    def middleware(self, method, *args, **kwargs):
+        """Call each loaded plugin with the same method, if it exists."""
+
+        kwargs['engine'] = self
+        return list(self.plugins.call(method, *args, **kwargs))
+
+    def pipeline(self, method, first, *args, **kwargs):
+        """Call each loaded plugin with the same method, if it exists,
+        passing the return value of each as the first argument of the
+        next.
+        """
+
+        kwargs['engine'] = self
+        return self.plugins.pipe(method, first, *args, **kwargs)
 
 
 class _BundleMeta(object):
+    """This is a dict-like object for bundle meta data."""
+
     def __init__(self, defaults, meta):
         self.defaults = defaults
         self.meta = meta
@@ -221,6 +248,7 @@ class _BundleMeta(object):
         self.meta.update(data)
 
 class Bundle(dict):
+    """Each bundle is a collection of input files, properties, and meta data."""
 
     def __init__(self, key, defaults=None):
         self.key = key
@@ -234,6 +262,8 @@ class Bundle(dict):
     _meta = None
     @property
     def meta(self):
+        """Bundle meta data loaded from a YAML file in the bundle."""
+
         if self._meta is None:
             yaml_filename = self.by_ext('yaml')
             if yaml_filename:
@@ -245,10 +275,14 @@ class Bundle(dict):
 
     @property
     def recent(self):
+        """The updated, published, or created time. The first to exist is given."""
+
         M = self.meta
         return M['updated_time'] or M['publish_time'] or M['created_time']
 
     def write_meta(self):
+        """Writes any changes in the meta data back to the YAML file."""
+
         yaml_filename = self.by_ext('yaml')
         yaml.dump(
             self._meta.meta,
@@ -263,11 +297,15 @@ class Bundle(dict):
         return iter(self.entries)
 
     def add(self, input_dir, directory, filename):
+        """Add a single file to the bundle."""
+
         self.entries.append((input_dir, directory, filename))
         base, ext = os.path.splitext(filename)
         self._files_by_ext[ext.lstrip('.')] = (input_dir, directory, filename)
 
     def by_ext(self, ext):
+        """Find one file in the bundle with the given extension, or return None"""
+
         try:
             input_dir, directory, filename = self._files_by_ext[ext]
             return os.path.join(input_dir, directory, filename)
@@ -278,6 +316,8 @@ class Bundle(dict):
         return self
 
     def prepare(self, engine):
+        """Prepare the bundle for the engine."""
+
         self._prepare_render(engine)
         self._prepare_contents(engine)
 
@@ -316,6 +356,11 @@ class Bundle(dict):
                 self.output_path = output_path
 
     def render(self, engine, output_dir):
+        """Render the bundle to the output. "Render" can mean rendering a
+        Jinja2 template or simply copying files, depending on the bundle and
+        configuration.
+        """
+
         self._render_with(engine, output_dir, self.template, self.output_path)
 
     def _render_with(self, engine, output_dir, template, output_path):
@@ -342,13 +387,13 @@ class Bundle(dict):
 
         # If nothing to render, allow the bundle to copy content
         else:
-            for input_dir, directory, filename in self.to_copy(engine):
+            for input_dir, directory, filename in self._to_copy(engine):
                 src_path = os.path.join(input_dir, directory, filename)
                 dest_path = os.path.join(output_dir, directory, filename)
                 ensure_path(os.path.dirname(dest_path))
                 shutil.copy(src_path, dest_path)
 
-    def to_copy(self, engine):
+    def _to_copy(self, engine):
         for input_dir, directory, filename in self:
             for ignore_pattern in engine.config.get('ignore', ()):
                 if not fnmatch(filename, ignore_pattern):
@@ -394,14 +439,10 @@ class Bundle(dict):
 
     def url(self):
         if self.template and self.output_path:
-            return self._url().rsplit('index.html', 1)[0]
+            key = self.key.lstrip('./')
+            ext = self.meta.get('output_ext', 'html')
+            if ext:
+                ext = '.' + ext
+            return (key + ext).rsplit('index.html', 1)[0]
         return None
 
-
-class BundleFactory(Bundle):
-
-    def get_bundles(self, **kwargs):
-        bundle = Bundle(self.key.format(**kwargs))
-        bundle.entries = self.entries
-        bundle._files_by_ext = self._files_by_ext
-        bundle.update(self)

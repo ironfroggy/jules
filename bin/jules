@@ -51,7 +51,6 @@ class Build(Command):
         if not os.path.exists(output_dir) or self.args['force']:
             engine = jules.JulesEngine(os.path.abspath('.'))
             engine.prepare()
-            engine.prepare_bundles()
             engine.render_site(output_dir)
             
         else:
