@@ -37,8 +37,10 @@
 
         <h3>Tags</h3>
         <ul class=list>
-        {% for tag, tag_bundle in engine.context.tags.items() %}
-            <li><a href="{{ tag_bundle.url() }}"> {{ tag }}</a></li>
+        {% for tag in collections['tags'] %}
+            {% if tag.active %}
+                <li><a href="{{ tag.url() }}"> {{ tag.value }}</a></li>
+            {% endif %}
         {% endfor %}
         </ul>
     </div>

@@ -24,7 +24,7 @@
         <entry>
             <title type="html">{{ bundle.meta.title }}</title>
             <author><name>{{ bundle.meta.author|escape or config.default_author|escape }}</name></author>
-            <link href="http://{{ config.domain }}{{ bundle.url() }}?utm_source=subscriber&amp;utm_medium=feed&amp;utm_term={{ term }}&amp;utm_campaign={{config.feed_campaign.name}}"/>
+            <link href="http://{{ config.domain }}{{ bundle.url() }}{% if 'feed_campaign' in config %}?utm_source=subscriber&amp;utm_medium=feed&amp;utm_term={{ term }}&amp;utm_campaign={{config.feed_campaign.name}}{% endif %}"/>
             <updated>{{ bundle.meta.publish_date }}</updated>
             <published>{{ bundle.meta.publish_date }}</published>
             <id>{{ bundle.key }}</id>

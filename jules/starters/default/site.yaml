@@ -11,4 +11,20 @@ packs:
 google_analytics_id: "UA-XXXXXX-XX"
 domain: "www.example.com"
 default_author: "You <you@example.com>"
-tag_path: "tags/{tag}/"
+ignore:
+- "*.swp"
+- "*.swo"
+- "~*"
+bundle_defaults:
+    output_ext: ""
+    render: jinja2
+collections:
+    tags:
+        key_pattern: "{value}"
+        match:
+            status: published
+        group_by:
+            in: tags
+        meta:
+            render: jinja2
+            template: tag.j2

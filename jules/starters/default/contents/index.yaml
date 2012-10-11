@@ -1,2 +1,3 @@
 render: jinja2
 template: index.j2
+output_ext: "html"
