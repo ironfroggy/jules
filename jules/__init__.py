@@ -174,9 +174,9 @@ class JulesEngine(object):
         """Render all bundles to the output directory."""
 
         for k, bundle in self.bundles.items():
-            print('render', bundle.key)
-            for output in bundle.render(self, output_dir):
-                print('    ', output)
+            print('from bundle', bundle.key)
+            for action, output in bundle.render(self, output_dir):
+                print('    ', action, output)
 
     def get_template(self, name):
         """Load one template by name."""
@@ -386,7 +386,7 @@ class Bundle(dict):
                 output_path = os.path.join(output_path, 'index.html')
             with open(output_path, 'w') as out:
                 out.write(r)
-            yield output_path
+            yield 'render', output_path
 
         # If nothing to render, allow the bundle to copy content
         else:
@@ -395,13 +395,15 @@ class Bundle(dict):
                 dest_path = os.path.join(output_dir, directory, filename)
                 ensure_path(os.path.dirname(dest_path))
                 shutil.copy(src_path, dest_path)
-                yield dest_path
+                yield 'copy', dest_path
 
     def _to_copy(self, engine):
         for input_dir, directory, filename in self:
             for ignore_pattern in engine.config.get('ignore', ()):
-                if not fnmatch(filename, ignore_pattern):
-                    yield (input_dir, directory, filename)
+                if fnmatch(filename, ignore_pattern):
+                    break
+            else:
+                yield (input_dir, directory, filename)
 
     content = None
     def _prepare_contents(self, engine):
@@ -447,6 +449,6 @@ class Bundle(dict):
             ext = self.meta.get('output_ext', 'html')
             if ext:
                 ext = '.' + ext
-            return (key + ext).rsplit('index.html', 1)[0]
+            return "/{}{}".format(key, ext).rsplit('index.html', 1)[0]
         return None
 
