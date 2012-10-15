@@ -97,7 +97,6 @@ class Collector(object):
             key_pattern = self.engine.config['collections'][self.name].get('key_pattern', '{property}/{value}')
             for value in values:
                 key = key_pattern.format(property=group_by_property, value=value)
-                print("KEY", self.name, key_pattern, key)
                 if not value in self.collections:
                     collection = Collection(key, rule, group_by_property, value, self.meta)
                     self.engine.add_bundles({
