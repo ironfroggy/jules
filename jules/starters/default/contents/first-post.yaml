@@ -1,7 +1,6 @@
 title: First Post
 status: published
 publish_time: !!timestamp '2012-06-23 10:00:00'
-render: jinja2
 template: post.j2
 tags:
 - test

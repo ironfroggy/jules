@@ -3,11 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Jules's documentation!
+Welcome to Jules!
 =================================
 
 Jules is a static blog generator named after a victorian-ish era literary or
-intellectual character, because apparently that's a trend now.
+intellectual character, because that's a trendy thing to do.
+
+The design is flexible and plugin-oriented. Much of the built-in functionality
+is available through a set of plugins, which creates an architecture very prone
+to adaptation and customization. One of the major goals (though not yet reached)
+is template impartiality.
+
+Today, Jules is a very capable little static website generator you may find
+useful for your personal, project, or organization site.
+
+Jules is maintained by `Calvin Spealman <http://www.ironfroggy.com/>`_ (AKA `@ironfroggy <http://twitter.com/ironfroggy>`_)
 
 Table of Contents
 =================
@@ -18,6 +28,7 @@ Table of Contents
    getting-started
    api
    template
+   roadmap
 
 Overview
 ========
@@ -39,13 +50,11 @@ An example layout:
 +----------------------+-----------------------+-------------------+
 | LESS CSS Pack        | js/less.min           | js/less.min.js    |
 +----------------------+-----------------------+-------------------+
-| Your site pack       | site_base             | site_base.j2      |
+| Blog Starter         | index                 | index.j2          |
++----------------------+                       +-------------------+
+| Your site pack       |                       | index.yaml        |
 |                      +-----------------------+-------------------+
-|                      | index                 | index.j2          |
-|                      +                       +-------------------+
-|                      |                       | index.rst         |
-|                      +                       +-------------------+
-|                      |                       | index.yaml        |
+|                      | site_base             | site_base.j2      |
 +----------------------+-----------------------+-------------------+
 
 which might render into the a site like:
@@ -59,3 +68,4 @@ which might render into the a site like:
         └── less.min.js
 
 
+:ref:`Get started <getting-started>` making sites easily today.
