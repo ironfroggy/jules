@@ -2,6 +2,7 @@ Jules API
 =========
 
 
+.. _api-engine:
 .. autoclass:: jules.JulesEngine
     :members:
     :undoc-members:

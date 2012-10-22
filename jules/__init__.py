@@ -444,6 +444,8 @@ class Bundle(dict):
         return '/' + key + ext
 
     def url(self):
+        """Find the url the bundle will be rendered to."""
+
         if self.template and self.output_path:
             key = self.key.lstrip('./')
             ext = self.meta.get('output_ext', 'html')
