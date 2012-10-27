@@ -23,7 +23,7 @@ def filter_bundles(from_bundles, order_key=None, order='asc', limit=None, **kwar
             if order_key not in bundle.meta:
                 continue
         ok = True
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             if k == 'key':
                 if bundle.key != v:
                     ok = False

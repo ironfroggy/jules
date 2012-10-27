@@ -122,14 +122,14 @@ class JulesEngine(object):
         walking over the bundles.
         """
 
-        for k, b in self.bundles.iteritems():
+        for k, b in self.bundles.items():
             yield k, b
         first = True
         while first or self._new_bundles:
             first = False
             if self._new_bundles:
                 self.bundles.update(self._new_bundles)
-                for k, b in self._new_bundles.iteritems():
+                for k, b in self._new_bundles.items():
                     yield k, b
                 self._new_bundles = {}
 
@@ -258,7 +258,7 @@ class Bundle(dict):
         self._metadefaults = defaults or {}
 
     def __str__(self):
-        return u'Bundle(key=%r)' % (self.key,)
+        return 'Bundle(key=%r)' % (self.key,)
 
     _meta = None
     @property
