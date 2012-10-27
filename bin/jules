@@ -66,12 +66,19 @@ class Serve(Command):
     def execute(self, port, **kwargs):
         output_dir = self.parent.args['output']
 
-        import SimpleHTTPServer
-        import SocketServer
+        # python 2
+        try:
+            import SimpleHTTPServer
+            import SocketServer
+            handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+            server = SocketServer.TCPServer
+        # python 3
+        except ImportError:
+            from http.server import SimpleHTTPRequestHandler as handler
+            from http.server import HTTPServer as server
 
-        handler = SimpleHTTPServer.SimpleHTTPRequestHandler
         handler.extensions_map[''] = 'text/html'
-        httpd = SocketServer.TCPServer(("", int(port)), handler)
+        httpd = server(("", int(port)), handler)
 
         os.chdir(output_dir)
         httpd.serve_forever()
