@@ -385,7 +385,7 @@ class Bundle(dict):
             if os.path.exists(output_path) and os.path.isdir(output_path):
                 output_path = os.path.join(output_path, 'index.html')
             with open(output_path, 'w') as out:
-                out.write(r)
+                out.write(r.encode('utf8'))
             yield 'render', output_path
 
         # If nothing to render, allow the bundle to copy content
