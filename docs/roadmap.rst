@@ -21,6 +21,11 @@ Change atom feeds to be explicit
 Changelog
 ^^^^^^^^^
 
+0.2.0.1
+#######
+
+* Fixed generation of per-collection (tag listings, etc.) Atom feeds
+
 0.2
 ###
 
