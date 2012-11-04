@@ -17,6 +17,8 @@ Change atom feeds to be explicit
   * Published posts that aren't in feeds. Good for archive and index pages
   * Can re-post something to a feed when it gets an update
   * Can control better what contents go into a feed
+
+Tests...
   
 
 next release
@@ -25,6 +27,9 @@ next release
 * Added iso8601 filter for Atom complient datetime formats
 * Rendered output is UTF8 allows entities defined in ReST
 * When adding bundles, check for duplicates (conflicts between real and implied bundles)
+* Updated the starter site to improve formatting
+* Allow bundle configurations to be defined for collection/tag pages, as long
+  as the bundle key matches.
 
 Changelog
 ^^^^^^^^^
