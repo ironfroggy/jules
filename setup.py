@@ -11,7 +11,7 @@ INSTALL_REQUIRES = [
 ]
 
 setup(name='jules',
-    version='0.2',
+    version='0.2.0.1',
     description='Yet Another Static Blog Generator I guess',
     author='Calvin Spealman',
     author_email='ironfroggy@gmail.com',
