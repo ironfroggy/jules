@@ -24,6 +24,7 @@ next release
 
 * Added iso8601 filter for Atom complient datetime formats
 * Rendered output is UTF8 allows entities defined in ReST
+* When adding bundles, check for duplicates (conflicts between real and implied bundles)
 
 Changelog
 ^^^^^^^^^

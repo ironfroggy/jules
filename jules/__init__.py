@@ -114,7 +114,10 @@ class JulesEngine(object):
     def add_bundles(self, bundles):
         """Add additional bundles into the engine, mapping key->bundle."""
 
-        self._new_bundles.update(bundles)
+        for key, bundle in bundles.items():
+            if key in self._new_bundles or key in self.bundles:
+                raise ValueError("duplicate bundle '%s' would replace existing" % key)
+            self._new_bundles[key] = bundle
 
     def walk_bundles(self):
         """Iterate over (key, bundle) pairs in the engine, continuing to yield
