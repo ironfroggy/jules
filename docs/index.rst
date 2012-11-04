@@ -19,6 +19,15 @@ useful for your personal, project, or organization site.
 
 Jules is maintained by `Calvin Spealman <http://www.ironfroggy.com/>`_ (AKA `@ironfroggy <http://twitter.com/ironfroggy>`_)
 
+You can install Jules easily with
+
+.. code-block:: bash
+
+    pip install jules
+
+Which will install the latest version `from PyPI <http://pypi.python.org/pypi/jules>`_.
+
+
 Table of Contents
 =================
 
