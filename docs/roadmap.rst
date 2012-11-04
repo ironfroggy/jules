@@ -18,11 +18,11 @@ Change atom feeds to be explicit
   * Can re-post something to a feed when it gets an update
   * Can control better what contents go into a feed
 
-Tests...
-  
+Changelog
+^^^^^^^^^
 
-next release
-############
+0.2
+###
 
 * Added iso8601 filter for Atom complient datetime formats
 * Rendered output is UTF8 allows entities defined in ReST
@@ -30,9 +30,7 @@ next release
 * Updated the starter site to improve formatting
 * Allow bundle configurations to be defined for collection/tag pages, as long
   as the bundle key matches.
-
-Changelog
-^^^^^^^^^
+* Added tox tests to ensure packaging, install, site init, and site building work correctly on 2.7 and 3.2
 
 0.1.1
 ####
