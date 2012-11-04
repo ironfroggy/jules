@@ -165,7 +165,7 @@ class JulesEngine(object):
 
     def get_bundle(self, *args, **kwargs):
         """With the same parameters as get_bundles_by() find exactly one
-        bundle, and raise an exception if 0 or more than 1 are found.
+        bundle, and raise ValueError if 0 or more than 1 are found.
         """
 
         bundles = list(self.get_bundles_by(*args, **kwargs))
