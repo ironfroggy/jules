@@ -57,6 +57,18 @@ class Build(Command):
             print("error: Refusing to replace {} output directory!".format(output_dir))
 
 
+class Tags(Command):
+    def execute(self, **kwargs):
+        engine = jules.JulesEngine(os.path.abspath('.'))
+        engine.prepare()
+        tags = set()
+        for key, bundle in engine.bundles.items():
+            for tag in bundle.meta.get('tags', []):
+                tags.add(tag)
+        for tag in tags:
+            print(tag)
+
+
 class Serve(Command):
 
     port = Option(dest='port', default=8000)
@@ -164,6 +176,7 @@ class JulesCommand(Command):
     update = SubCommand('update', UpdateBundle)
     meta = SubCommand('meta', BundleMeta)
     publish = SubCommand('publish', PublishBundle)
+    tags = SubCommand('tags', Tags)
 
 
 if __name__ == '__main__':

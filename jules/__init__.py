@@ -118,10 +118,12 @@ class JulesEngine(object):
             exists = False
             if key in self._new_bundles:
                 exists = True
+                existing_bundle = self._new_bundles[key]
                 if replace:
                     del self._new_bundles[key]
             if key in self.bundles:
                 exists = True
+                existing_bundle = self.bundles[key]
                 self.bundles[key] = bundle
             if exists and not replace:
                 raise ValueError("duplicate bundle '%s' would replace existing" % key)

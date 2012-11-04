@@ -18,6 +18,8 @@ collections:
               rule: equals
 """
 
+from __future__ import print_function
+
 import jules
 
 
@@ -44,10 +46,11 @@ class Collection(jules.Bundle):
         """
 
         r = super(Collection, self).render(engine, output_dir)
-        self._render_with(engine, output_dir,
+        for output in self._render_with(engine, output_dir,
             engine.get_template("atom.j2"),
-            "feeds/{}/atom.xml".format(self.value),
-            )
+            "feeds/{}/atom.xml".format(self.key),
+            ):
+            print("    render feed", self.key)
         return r
 
     def get_bundles_by(self, *args, **kwargs):
