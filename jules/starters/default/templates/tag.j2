@@ -6,8 +6,12 @@
 {% endblock %}
 
 {% block header_right %}
-    <h1><em>{{ bundle.tagname }}</em> tagged content</h1>
-    <a href="/feeds/{{ bundle.key }}/atom.xml"><img src="/images/feed_icon.png" /></a>
+    {% if bundle.meta.title %}
+        <h1 class=title>{{ bundle.meta.title|title }}</h1>
+    {% else %}
+        <h1 class=title><em>{{ bundle.value }}</em> tagged content</h1>
+    {% endif %}
+    <a href="/feeds/{{ bundle.key }}/atom.xml"><img src="/images/rss_icon.png" /></a>
 {% endblock %}
 
 {% block content %}
