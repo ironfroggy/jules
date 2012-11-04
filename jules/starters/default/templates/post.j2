@@ -38,7 +38,7 @@
         {{ bundle.content|safe }}
     </article>
 
-    {% if config.disqus.enabled_default and not bundle.meta.disqus_disable %}
+    {% if config.disqus and config.disqus.enabled_default and not bundle.meta.disqus_disable %}
         <div id="disqus_thread"></div>
         <script type="text/javascript">
             var disqus_shortname = 'wwwironfroggycom'; // required: replace example with your forum shortname

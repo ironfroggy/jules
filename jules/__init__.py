@@ -400,7 +400,7 @@ class Bundle(dict):
             ensure_path(os.path.dirname(output_path))
             if os.path.exists(output_path) and os.path.isdir(output_path):
                 output_path = os.path.join(output_path, 'index.html')
-            with open(output_path, 'w') as out:
+            with open(output_path, 'wb') as out:
                 out.write(r.encode('utf8'))
             yield 'render', output_path
 
