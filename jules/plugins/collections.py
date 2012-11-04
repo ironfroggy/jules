@@ -98,10 +98,21 @@ class Collector(object):
             for value in values:
                 key = key_pattern.format(property=group_by_property, value=value)
                 if not value in self.collections:
-                    collection = Collection(key, rule, group_by_property, value, self.meta)
+                    # Add if new, merge with a YAML file, but stop if we'd overwrite a bundle
+                    replace = False
+                    meta = self.meta
+                    try:
+                        existing = self.engine.get_bundle(key=key)
+                    except ValueError:
+                        pass
+                    else:
+                        if ['yaml'] == list(existing.parts):
+                            meta = jules._BundleMeta(meta, existing.meta)
+                            replace = True
+                    collection = Collection(key, rule, group_by_property, value, meta)
                     self.engine.add_bundles({
                         key: collection,
-                    })
+                    }, replace=replace)
                     self.collections[value] = collection
                 else:
                     collection = self.collections[value]

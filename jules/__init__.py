@@ -111,13 +111,22 @@ class JulesEngine(object):
                     k, input_dir, directory, filename)
             bundle.prepare(self)
 
-    def add_bundles(self, bundles):
+    def add_bundles(self, bundles, replace=False):
         """Add additional bundles into the engine, mapping key->bundle."""
 
         for key, bundle in bundles.items():
-            if key in self._new_bundles or key in self.bundles:
+            exists = False
+            if key in self._new_bundles:
+                exists = True
+                if replace:
+                    del self._new_bundles[key]
+            if key in self.bundles:
+                exists = True
+                self.bundles[key] = bundle
+            if exists and not replace:
                 raise ValueError("duplicate bundle '%s' would replace existing" % key)
-            self._new_bundles[key] = bundle
+            if key not in self.bundles:
+                self._new_bundles[key] = bundle
 
     def walk_bundles(self):
         """Iterate over (key, bundle) pairs in the engine, continuing to yield
@@ -315,6 +324,10 @@ class Bundle(dict):
             return os.path.join(input_dir, directory, filename)
         except KeyError:
             pass
+    
+    @property
+    def parts(self):
+        return dict(self._files_by_ext)
 
     def get_bundles(self):
         return self
