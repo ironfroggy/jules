@@ -383,6 +383,13 @@ class Bundle(dict):
         for output in self._render_with(engine, output_dir, self.template, self.output_path):
             yield output
 
+    def _finalize_output_path(self, output_dir, output_path):
+        output_path = os.path.join(output_dir, output_path)
+        ensure_path(os.path.dirname(output_path))
+        if os.path.exists(output_path) and os.path.isdir(output_path):
+            output_path = os.path.join(output_path, 'index.html')
+        return output_path
+
     def _render_with(self, engine, output_dir, template, output_path):
         """Render the bundle into the output directory."""
 
@@ -398,10 +405,7 @@ class Bundle(dict):
                 'bundles': engine.bundles.values(),
             })
             r = template.render(ctx)
-            output_path = os.path.join(output_dir, output_path)
-            ensure_path(os.path.dirname(output_path))
-            if os.path.exists(output_path) and os.path.isdir(output_path):
-                output_path = os.path.join(output_path, 'index.html')
+            output_path = self._finalize_output_path(output_dir, output_path)
             with open(output_path, 'wb') as out:
                 out.write(r.encode('utf8'))
             yield 'render', output_path

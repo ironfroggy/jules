@@ -1,4 +1,5 @@
 import os
+from datetime import date, datetime
 
 from straight.plugin import load
 
@@ -38,7 +39,12 @@ def filter_bundles(from_bundles, order_key=None, order='asc', limit=None, **kwar
         if ok:
             bundles.append(bundle)
     if order_key is not None:
-        bundles.sort(key=lambda b: b.meta[order_key], reverse=reverse)
+        def key(b):
+            v = b.meta[order_key]
+            if isinstance(v, date):
+                v = datetime.fromordinal(v.toordinal())
+            return v
+        bundles.sort(key=key, reverse=reverse)
     if limit is not None:
         bundles = bundles[:limit]
     return bundles

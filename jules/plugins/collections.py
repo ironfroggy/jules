@@ -20,7 +20,10 @@ collections:
 
 from __future__ import print_function
 
+import os
+
 import jules
+from jules.utils import ensure_path
 
 
 class Collection(jules.Bundle):
@@ -39,6 +42,13 @@ class Collection(jules.Bundle):
         self._meta = meta
 
         self.bundles = set()
+
+    def _finalize_output_path(self, *a, **kw):
+        path = super(Collection, self)._finalize_output_path(*a, **kw)
+        if not path.endswith('index.html') and not path.endswith('atom.xml'):
+            ensure_path(path)
+            path = os.path.join(path, 'index.html')
+        return path
 
     def render(self, engine, output_dir):
         """Collections have the side-effect of rendering a
@@ -87,6 +97,15 @@ class Collector(object):
             of the collections being kept by theis collector.
         """
 
+        # This plugin adds helpers to all bundles
+        bundle.get_collections = lambda name: bundle.meta['collections'][name]
+        def get_collection(name):
+            try:
+                return list(bundle.meta['collections'][name])[0]
+            except (KeyError, IndexError):
+                return None
+        bundle.get_collection = get_collection
+
         try:
             value = bundle.meta[group_by_property]
         except KeyError:
@@ -97,7 +116,7 @@ class Collector(object):
             elif rule == 'in':
                 values = value
 
-            key_pattern = self.engine.config['collections'][self.name].get('key_pattern', '{property}/{value}')
+            key_pattern = self.engine.config['collections'][self.name].get('key_pattern', '{value}')
             for value in values:
                 key = key_pattern.format(property=group_by_property, value=value)
                 if not value in self.collections:
