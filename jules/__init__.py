@@ -440,6 +440,8 @@ class Bundle(dict):
             content_path = os.path.abspath(os.path.expanduser(self.meta['content']))
         else:
             for input_dir, directory, filename in self:
+                if content_path is not None:
+                    break
                 for ext in ext_plugins:
                     if filename.endswith(ext):
                         content_path = os.path.join(input_dir, directory, filename)
@@ -468,6 +470,8 @@ class Bundle(dict):
     def url(self):
         """Find the url the bundle will be rendered to."""
 
+        if self.meta.get('url'):
+            return self.meta['url']
         if self.template and self.output_path:
             key = self.key.lstrip('./')
             ext = self.meta.get('output_ext', 'html')
