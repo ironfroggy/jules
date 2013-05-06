@@ -47,10 +47,10 @@ class Build(Command):
     force = Option(short='-f', dest='force', action='store_true')
 
     def execute(self, **kwargs):
-        output_dir = self.parent.args['output']
+        engine = jules.JulesEngine(os.path.abspath('.'))
+        engine.prepare()
+        output_dir = engine.config.get('output', self.parent.args['output'])
         if not os.path.exists(output_dir) or self.args['force']:
-            engine = jules.JulesEngine(os.path.abspath('.'))
-            engine.prepare()
             engine.render_site(output_dir)
             
         else:
