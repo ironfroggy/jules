@@ -11,14 +11,17 @@ plugin_order = -100
 
 
 @register
-def sortbundles(bundles, prop):
+def sortbundles(bundles, props):
     bundles = list(bundles)
+    props = props.split(',')
     def key(bundle):
-        value = bundle.meta[prop]
-        if hasattr(value, 'lower'):
-            return value.lower()
-        else:
-            return value
+        values = []
+        for prop in props:
+            value = bundle.meta.get(prop, 0)
+            if hasattr(value, 'lower'):
+                value = value.lower()
+            values.append(value)
+        return tuple(values)
     bundles.sort(key=key)
     return bundles
 
