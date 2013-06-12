@@ -36,8 +36,8 @@ def doclink(name, rawtext, text, lineno, inliner, options={}, content=[]):
 
     engine = inliner.document.settings.jules
     try:
-        m = re.match(r'(.*)<([-\w]+)>', text)
-        label, key = m.groups()
+        m = re.match(r'(.*)<([-\w]+)(#[-\w]+)?>', text)
+        label, key, anchor = m.groups()
     except (AttributeError, re.error):
         label = None
         key = text
