@@ -1,0 +1,13 @@
+0.3.0 Released June 12, 2013
+----------------------------
+
+- Allow 'output' configuration entry to set the output directory
+- Write bundle parents into directories with index.html
+- Only look for a single content plugin to process content data
+- Bundle meta data 'url' can override the URL linked to for the bundle
+- html5boilerplate pack uses domain in script and style links, for prefixes
+- Bundle.get_collection(name) finds a collection a bundle is a member of
+- Bundle.get_collections() finds all collections a bundle is a member of
+- sortbundles template filter can take multiple comma-separated fields
+- Linking between rst content supports anchors in references
+- Sorting bundles by date and datetime objects is handled properly
