@@ -75,31 +75,11 @@ class JulesEngine(object):
     def find_bundles(self):
         """Find all bundles in the input directories, load them, and prepare them."""
 
-        defaults = self.config.get('bundle_defaults', {})
-        for bundles in self.plugins.call('find_bundles'):
+        for bundles in self.plugins.call('find_bundles', self.config, self.input_dirs):
             for bundle in bundles:
                 self.bundles[bundle.key] = bundle
-        for input_dir, directory, dirnames, filenames in self._walk():
-            for fn in filenames:
-                for ignore_pattern in self.config.get('ignore', ()):
-                    if fnmatch(fn, ignore_pattern):
-                        break
-                else:
-                    base, ext = os.path.splitext(fn)
-                    key = os.path.join(directory, base)
-                    if key.startswith('./'):
-                        key = key[2:]
-                    bundle = self.bundles.setdefault(key, Bundle(key, defaults.copy()))
-                    bundle.add(input_dir, directory, fn)
 
         self.prepare_bundles()
-
-    def _walk(self):
-        for input_dir in self.input_dirs:
-            for directory, dirnames, filenames in os.walk(input_dir):
-                directory = os.path.relpath(directory, input_dir)
-
-                yield (input_dir, directory, dirnames, filenames)
 
     def prepare_bundles(self):
         """Prepare the bundles, allow plugins to process them."""
