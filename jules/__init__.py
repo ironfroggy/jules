@@ -75,7 +75,7 @@ class JulesEngine(object):
     def find_bundles(self):
         """Find all bundles in the input directories, load them, and prepare them."""
 
-        for bundles in self.plugins.call('find_bundles', self.config, self.input_dirs):
+        for bundles in self.middleware('find_bundles'):
             for bundle in bundles:
                 self.bundles[bundle.key] = bundle
 
