@@ -200,8 +200,12 @@ class JulesEngine(object):
     def load_plugins(self, ns='jules.plugins'):
         """Load engine plugins, and sort them by their plugin_order attribute."""
 
+        # Loading "plain" plugins first, which are the plugin modules under jules.plugins
         self.plugins = load(ns)
         self.plugins._plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
+
+        # Load Template plugins, which inject API into templates
+        self.template_plugins = load('jules.plugins', subclasses=jules.plugins.TemplatePlugin)
 
     def middleware(self, method, *args, **kwargs):
         """Call each loaded plugin with the same method, if it exists."""
@@ -395,6 +399,10 @@ class Bundle(dict):
 
         # If there is a template and path, render it
         if template and output_path:
+            plugins = {}
+            for p in engine.template_plugins:
+                plugins[p.name] = p(engine)
+
             ctx = {}
             ctx.update(engine.context)
             ctx.update({
@@ -403,6 +411,7 @@ class Bundle(dict):
                 'engine': engine,
                 'config': engine.config,
                 'bundles': engine.bundles.values(),
+                'plugins': plugins,
             })
             r = template.render(ctx)
             output_path = self._finalize_output_path(output_dir, output_path)

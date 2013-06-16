@@ -24,6 +24,7 @@ import os
 
 import jules
 from jules.utils import ensure_path
+from jules.plugins import TemplatePlugin
 
 
 class Collection(jules.Bundle):
@@ -72,6 +73,19 @@ class Collection(jules.Bundle):
         self.bundles.add(bundle)
 
 
+class CollectionAPI(TemplatePlugin):
+    name = 'collections'
+
+    def get_collections(self, bundle, name):
+        return bundle.meta['collections'][name]
+
+    def get_collection(self, bundle, name):
+        try:
+            return list(bundle.meta['collections'][name])[0]
+        except (KeyError, IndexError):
+            return None
+
+
 class Collector(object):
     def __init__(self, engine, name, match, group_by, order='slug'):
         self.engine = engine
@@ -96,15 +110,6 @@ class Collector(object):
         bundle: The bundle to collect, if it matches the rules, into one
             of the collections being kept by theis collector.
         """
-
-        # This plugin adds helpers to all bundles
-        bundle.get_collections = lambda name: bundle.meta['collections'][name]
-        def get_collection(name):
-            try:
-                return list(bundle.meta['collections'][name])[0]
-            except (KeyError, IndexError):
-                return None
-        bundle.get_collection = get_collection
 
         try:
             value = bundle.meta[group_by_property]
