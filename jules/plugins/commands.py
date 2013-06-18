@@ -20,7 +20,17 @@ def now_minute():
     return datetime.now().replace(second=0, microsecond=0)
 
 
-class Init(Command):
+class BaseCommand(Command):
+
+    def __init__(self, *args, **kwargs):
+        super(BaseCommand, self).__init__(*args, **kwargs)
+
+        engine = jules.JulesEngine(os.path.abspath('.'))
+        engine.prepare()
+        
+        self.engine = engine
+
+class Init(BaseCommand):
 
     version = "0.1"
     help = "Create a new site based on a starter template."
@@ -38,7 +48,7 @@ class Init(Command):
             shutil.copytree(starter_path, projectname)
         
 
-class Build(Command):
+class Build(BaseCommand):
 
     version = "0.2"
 
@@ -47,29 +57,25 @@ class Build(Command):
     force = Option(short='-f', dest='force', action='store_true')
 
     def execute(self, **kwargs):
-        engine = jules.JulesEngine(os.path.abspath('.'))
-        engine.prepare()
-        output_dir = engine.config.get('output', self.parent.args['output'])
+        output_dir = self.engine.config.get('output', self.parent.args['output'])
         if not os.path.exists(output_dir) or self.args['force']:
-            engine.render_site(output_dir)
+            self.engine.render_site(output_dir)
             
         else:
             print("error: Refusing to replace {} output directory!".format(output_dir))
 
 
-class Tags(Command):
+class Tags(BaseCommand):
     def execute(self, **kwargs):
-        engine = jules.JulesEngine(os.path.abspath('.'))
-        engine.prepare()
         tags = set()
-        for key, bundle in engine.bundles.items():
+        for key, bundle in self.engine.bundles.items():
             for tag in bundle.meta.get('tags', []):
                 tags.add(tag)
         for tag in tags:
             print(tag)
 
 
-class Serve(Command):
+class Serve(BaseCommand):
 
     port = Option(dest='port', default=8000)
     
@@ -96,7 +102,7 @@ class Serve(Command):
         httpd.serve_forever()
 
 
-class BundleMeta(Command):
+class BundleMeta(BaseCommand):
     """Update or view meta data for a bundle.
 
     If no property is specified, all are shown.
@@ -109,11 +115,8 @@ class BundleMeta(Command):
     value = Option(dest='value', default=None)
 
     def execute(self, key, prop, value, **kwargs):
-        engine = jules.JulesEngine(os.path.abspath('.'))
-        engine.prepare()
-        engine.prepare_bundles()
 
-        bundle = engine.get_bundle(key=key)
+        bundle = self.engine.get_bundle(key=key)
         label = bundle.meta.get('title', key)
         print("Bundle %s" % label)
         if prop:
@@ -125,18 +128,15 @@ class BundleMeta(Command):
                 print("%s = %s" % (prop, bundle.meta.get(prop)))
 
 
-class UpdateBundle(Command):
+class UpdateBundle(BaseCommand):
     """Sets a datetime meta property to the current time."""
 
     key = Option(dest='key')
     prop = Option(dest='prop', default='updated_time')
 
     def execute(self, key, prop, **kwargs):
-        engine = jules.JulesEngine(os.path.abspath('.'))
-        engine.prepare()
-        engine.prepare_bundles()
 
-        bundle = engine.get_bundle(key=key)
+        bundle = self.engine.get_bundle(key=key)
         label = bundle.meta.get('title', key)
 
         bundle.meta[prop] = now_minute()
@@ -144,17 +144,13 @@ class UpdateBundle(Command):
         print("Bundle %s updated at %s" % (label, bundle.meta['updated_time']))
 
 
-class PublishBundle(Command):
+class PublishBundle(BaseCommand):
     """Sets the publish_time and updated_time and sets status as "published"."""
 
     key = Option(dest='key')
 
     def execute(self, key, **kwargs):
-        engine = jules.JulesEngine(os.path.abspath('.'))
-        engine.prepare()
-        engine.prepare_bundles()
-
-        bundle = engine.get_bundle(key=key)
+        bundle = self.engine.get_bundle(key=key)
         meta = bundle.meta
         label = meta.get('title', key)
 
