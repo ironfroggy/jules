@@ -1,0 +1,35 @@
+Ideas for improving Jules:
+
+DONE:
+
+- move posts from files to folders.
+- move rendering to plugin system mostly.
+
+TODO:
+
+- Allow querying by directory.
+- Actually implement posts and reST documents and such.
+- implement atom query plugin: render to the atom stream, which itself is
+  sorted by date and such.
+  
+  Note that this has a lot of shared functionality with rendering to an URL.
+  Likely we want to share the function using a more general "rendering" plugin
+  which can be called by both.
+- actually implement template rendering, including:
+  - access to bundles db to write new queries. i.e. the posts page should still
+    be able to access, if it wants, the tags and such
+- Possibly move all instantiation/usage of plugin subclasses into the plugin
+  engine thing, including name/slot registration and such? who knows.
+- "pack support"???
+- static files component
+  - finalization of plugins after site generation? need a defined process...
+
+NICE:
+- Allow authors to unify content and YAML via a custom reST directive (reST only)
+- move defaults into centralized location(s) rather than hardcoding when retrieved.
+- Replace eval() with using jinja's expression syntax/semantics.
+- dead link detection
+- unused content detection
+- detection of backwards-compatibility breakage in URLs
+  (want so that never happens.)
+- don't regenerate content that hasn't been updated

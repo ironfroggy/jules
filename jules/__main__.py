@@ -46,13 +46,13 @@ class Build(Command):
 
     def execute(self, **kwargs):
         engine = jules.JulesEngine(os.path.abspath('.'))
-        engine.prepare()
-        output_dir = engine.config.get('output', self.parent.args['output'])
-        if not os.path.exists(output_dir) or self.args['force']:
-            engine.render_site(output_dir)
-            
-        else:
-            print("error: Refusing to replace {} output directory!".format(output_dir))
+        engine.run()
+        #output_dir = engine.config.get('output', self.parent.args['output'])
+        #if not os.path.exists(output_dir) or self.args['force']:
+        #    engine.render_site(output_dir)
+        #    
+        #else:
+        #    print("error: Refusing to replace {} output directory!".format(output_dir))
 
 
 class Tags(Command):
@@ -122,46 +122,6 @@ class BundleMeta(Command):
             for prop in bundle.meta:
                 print("%s = %s" % (prop, bundle.meta.get(prop)))
 
-
-class UpdateBundle(Command):
-    """Sets a datetime meta property to the current time."""
-
-    key = Option(dest='key')
-    prop = Option(dest='prop', default='updated_time')
-
-    def execute(self, key, prop, **kwargs):
-        engine = jules.JulesEngine(os.path.abspath('.'))
-        engine.prepare()
-        engine.prepare_bundles()
-
-        bundle = engine.get_bundle(key=key)
-        label = bundle.meta.get('title', key)
-
-        bundle.meta[prop] = now_minute()
-        bundle.write_meta()
-        print("Bundle %s updated at %s" % (label, bundle.meta['updated_time']))
-
-
-class PublishBundle(Command):
-    """Sets the publish_time and updated_time and sets status as "published"."""
-
-    key = Option(dest='key')
-
-    def execute(self, key, **kwargs):
-        engine = jules.JulesEngine(os.path.abspath('.'))
-        engine.prepare()
-        engine.prepare_bundles()
-
-        bundle = engine.get_bundle(key=key)
-        meta = bundle.meta
-        label = meta.get('title', key)
-
-        meta['publish_time'] = now_minute()
-        meta['updated_time'] = meta['publish_time'].replace()
-        meta['status'] = 'published'
-        bundle.write_meta()
-        print("Bundle %s updated at %s" % (label, meta['updated_time']))
-
 class JulesCommand(Command):
 
     version = "0.2"
@@ -171,9 +131,7 @@ class JulesCommand(Command):
     basecopy = SubCommand('build', Build)
     serve = SubCommand('serve', Serve)
     init = SubCommand('init', Init)
-    update = SubCommand('update', UpdateBundle)
     meta = SubCommand('meta', BundleMeta)
-    publish = SubCommand('publish', PublishBundle)
     tags = SubCommand('tags', Tags)
 
 def main():

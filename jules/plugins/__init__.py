@@ -1,8 +1,9 @@
-class ContentPlugin(object):
+class ComponentPlugin(object):
+    def __init__(self, config, plugin_engine):
+        self.config = config
+        self.plugin_engine = plugin_engine
 
-    def __init__(self, engine):
-        self.engine = engine
-
-    def parse(self, content_file):
-        src = content_file.read()
-        return self.parse_string(src)
+class QueryPlugin(object):
+    def __init__(self, config, plugin_engine):
+        self.config = config
+        self.plugin_engine = plugin_engine

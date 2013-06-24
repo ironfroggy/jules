@@ -2,13 +2,8 @@
 
 from setuptools import setup, find_packages
 
-INSTALL_REQUIRES = [
-    'straight.plugin',
-    'straight.command',
-    'pyyaml',
-    'jinja2',
-    'docutils',
-]
+with open('requirements.txt') as f:
+    INSTALL_REQUIRES = f.read().splitlines()
 
 setup(name='jules',
     version='0.2.0.1',

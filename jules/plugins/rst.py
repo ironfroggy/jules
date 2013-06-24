@@ -1,21 +1,21 @@
 import re
 
-from jules.plugins import ContentPlugin
+#from jules.plugins import ContentPlugin
 
 from docutils.core import publish_parts
 from docutils import nodes, utils
 from docutils.parsers.rst import roles
 
 
-class RstContentParser(ContentPlugin):
-    """Parses any .rst files in a bundle."""
-
-    extensions = ('.rst',)
-    
-    def parse_string(self, src):
-        parts = publish_parts(source=src, writer_name='html',
-            settings_overrides={'jules': self.engine})
-        return parts['html_body']
+#class RstContentParser(ContentPlugin):
+#    """Parses any .rst files in a bundle."""
+#
+#    extensions = ('.rst',)
+#    
+#    def parse_string(self, src):
+#        parts = publish_parts(source=src, writer_name='html',
+#            settings_overrides={'jules': self.engine})
+#        return parts['html_body']
 
 
 def doclink(name, rawtext, text, lineno, inliner, options={}, content=[]):
