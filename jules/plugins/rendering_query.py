@@ -3,7 +3,7 @@ import jules
 from jules.query import cache, unwrapping_kwargs, method_registrar
 
 class RenderingQuery(jules.plugins.QueryPlugin):
-    """Basic querying operations"""
+    """Query operatings for rendering results to disk."""
     methods = []
     register = method_registrar(methods)
     
