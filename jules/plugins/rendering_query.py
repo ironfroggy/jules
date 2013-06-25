@@ -27,11 +27,10 @@ class RenderingQuery(jules.plugins.QueryPlugin):
     @register
     @unwrapping_kwargs
     def render_each(self, results, template, url):
-        results = cache(results)
         url = jinja2.Template(url)
         for item in results:
             print "RENDER %s(%s) --> %s" % (template, item, url.render(item))
-        return results
+            yield item
     
     @register
     @unwrapping_kwargs

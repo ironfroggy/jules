@@ -68,7 +68,7 @@ class JulesEngine(object):
                 bundles[bundle.key] = bundle
 
         for k, bundle in bundles.iteritems():
-            bundle.prepare(engine=self.plugins)
+            bundle.prepare(self.config, engine=self.plugins)
 
         return bundles
     
@@ -78,15 +78,15 @@ class JulesEngine(object):
         
     def render_all(self, bundles):
         """Render queries in `entires` section of config"""
-        for q in config['entries']:
+        for q in self.config['entries']:
             (query_name, pipeline), = q.iteritems()
             self._render_query(bundles, query_name, pipeline)
     
     def _render_query(self, bundles, name, pipeline):
-        bundles.values()
+        results = bundles.values()
         for stmt in pipeline:
             (dispatch_key, arg), = stmt.iteritems()
-            results = self.qe.dispatch(dispatch_key, results, arg)
+            results = self.query_engine.dispatch(dispatch_key, results, arg)
         list(results)
 
 
