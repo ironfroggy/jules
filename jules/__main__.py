@@ -24,15 +24,18 @@ class Init(Command):
     help = "Create a new site based on a starter template."
 
     projectname = Option(dest='projectname', action='store')
+    template = Option(short='-t', dest='template', action='store')
 
     def execute(self, **kwargs):
         projectname = kwargs["projectname"]
+        template = kwargs["template"] or 'default'
+        
         if not projectname:
             print("error: You must specify a project name")
         elif os.path.exists(projectname):
             print("error: The path '{}' already exists".format(projectname))
         else:
-            starter_path = os.path.join(os.path.dirname(jules.__file__), 'starters', 'default')
+            starter_path = os.path.join(os.path.dirname(jules.__file__), 'starters', template)
             shutil.copytree(starter_path, projectname)
         
 
@@ -42,10 +45,11 @@ class Build(Command):
 
     help = "Build the site, rendering all the bundles found."
 
+    sitelocation = Option(short='-L', dest='location', action='store')
     force = Option(short='-f', dest='force', action='store_true')
 
     def execute(self, **kwargs):
-        engine = jules.JulesEngine(os.path.abspath('.'))
+        engine = jules.JulesEngine(os.path.abspath(kwargs['location'] or '.'))
         engine.run()
         #output_dir = engine.config.get('output', self.parent.args['output'])
         #if not os.path.exists(output_dir) or self.args['force']:
@@ -79,7 +83,7 @@ class Serve(Command):
         # python 2
         try:
             import SimpleHTTPServer
-            import SocketServer
+            import Socke3tServer
             handler = SimpleHTTPServer.SimpleHTTPRequestHandler
             server = SocketServer.TCPServer
         # python 3
@@ -134,9 +138,10 @@ class JulesCommand(Command):
     meta = SubCommand('meta', BundleMeta)
     tags = SubCommand('tags', Tags)
 
-def main():
+def main(argv=None):
     import sys
-    JulesCommand().run(sys.argv[1:])
+    argv = sys.argv if argv is None else argv
+    JulesCommand().run(argv[1:])
 
 if __name__ == '__main__':
     main()

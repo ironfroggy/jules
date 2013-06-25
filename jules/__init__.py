@@ -29,7 +29,9 @@ class JulesEngine(object):
             with open(config_path) as f:
                 config = yaml.safe_load(f)
         else:
-            raise ValueError("No configuration file found. Looking for site.yaml at `{}`.".format(src_path))
+            raise ValueError(
+                "No configuration file found. Looking for site.yaml at `{}`."
+                .format(self.src_path))
         
         config.setdefault(
             'templates',
@@ -42,7 +44,8 @@ class JulesEngine(object):
         input_dirs = []
 
         for bundle_dir in self.config.get('bundle_dirs', ()):
-            input_dirs.append(os.path.abspath(bundle_dir))
+            input_dirs.append(
+                os.path.abspath(os.path.join(self.src_path, bundle_dir)))
 
         def key(filename):
             d = re.search(r'^(\d+)', filename)

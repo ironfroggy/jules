@@ -1,0 +1,20 @@
+title: "Test Site"
+subtitle: "A Test site"
+bundle_dirs:
+ - "content"
+default_author: "You <you@example.com>"
+bundle_defaults: {}
+entries:
+ - posts: # meaningless name
+    - select:
+        require_components: ['meta']
+    - order_by:
+        key: meta["date_published"]
+    - count: 'post_num'
+    - render_each:
+        template: post.j2
+        url: /posts/{{post_num}}/
+    - render_all:
+        template: posts.j2
+        kw: posts
+        url: /posts/

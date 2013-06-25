@@ -23,6 +23,12 @@ TODO:
 - "pack support"???
 - static files component
   - finalization of plugins after site generation? need a defined process...
+- "canonical rendering" of bundles; this is hard to figure out :S
+  idea: canonical_for: "...{{foo}}..."
+        This way we aren't limited to bundle keys, but can use anything in the
+        document as a key. :>
+        Maybe we add the bundle key as a builtin component so that it can be
+        used, yes?
 
 NICE:
 - Allow authors to unify content and YAML via a custom reST directive (reST only)
