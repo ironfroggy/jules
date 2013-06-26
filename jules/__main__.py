@@ -24,18 +24,18 @@ class Init(Command):
     help = "Create a new site based on a starter template."
 
     projectname = Option(dest='projectname', action='store')
-    template = Option(short='-t', dest='template', action='store')
+    starter = Option(short='-s', long='--starter', dest='starter', action='store', default='default')
 
     def execute(self, **kwargs):
         projectname = kwargs["projectname"]
-        template = kwargs["template"] or 'default'
-        
+        starter= kwargs["starter"] or 'default'
+
         if not projectname:
             print("error: You must specify a project name")
         elif os.path.exists(projectname):
             print("error: The path '{}' already exists".format(projectname))
         else:
-            starter_path = os.path.join(os.path.dirname(jules.__file__), 'starters', template)
+            starter_path = os.path.join(os.path.dirname(jules.__file__), 'starters', starter)
             shutil.copytree(starter_path, projectname)
         
 

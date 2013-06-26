@@ -39,3 +39,4 @@ NICE:
 - detection of backwards-compatibility breakage in URLs
   (want so that never happens.)
 - don't regenerate content that hasn't been updated
+- definition of rewrite rules for web providers with rewrite rules.

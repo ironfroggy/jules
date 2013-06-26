@@ -28,7 +28,7 @@ class TestTemplate(unittest.TestCase):
             projectdir = os.path.join(tempdir, 'test_site')
             
             # create site
-            run_jules(['init', projectdir, '-t', 'test'])
+            run_jules(['init', projectdir, '-s', 'test'])
             
             # build site
             run_jules(['build', '-L', projectdir])

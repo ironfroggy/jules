@@ -3,4 +3,4 @@ pygments
 PyYAML
 docutils
 straight.plugin
-straight.command==0.1a3
+straight.command
