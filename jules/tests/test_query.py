@@ -1,5 +1,7 @@
 import unittest
 
+import os
+
 import jules
 from jules.query import *
 
@@ -15,7 +17,10 @@ class Val(object):
         self.components = val(*args, **kwargs)
 def val(x): return dict(val=x)
 
-config = dict(templates=[])
+config = dict(
+    templates=[],
+    output_dir=os.devnull # crap
+)
 
 class TestSimpleQuery(unittest.TestCase):
     bundle = Val(1)

@@ -8,8 +8,9 @@ def result(f):
 
 class QueryEngine(object):
     def __init__(self, config, engine):
-        plugins = engine.load(subclasses=jules.plugins.QueryPlugin)
-        self.plugins = [Plugin(config, engine) for Plugin in plugins]
+        self.plugins = (engine
+            .load(subclasses=jules.plugins.QueryPlugin)
+            .produce(config, engine))
         self.dispatch_map = {}
         for plugin in self.plugins:
             for method_name in plugin.methods:
@@ -23,6 +24,10 @@ class QueryEngine(object):
     
     def dispatch(self, method_name, *args, **kwargs):
         return self.dispatch_map[method_name](*args, **kwargs)
+    
+    def finalize(self):
+        for result in self.plugins.call("finalize"):
+            pass
 
 class ResultSet(object):
     def __init__(self, engine, seq):

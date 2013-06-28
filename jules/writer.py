@@ -46,21 +46,21 @@ class URLWriter(object):
     def ensure_directories(self, abstract_path):
         dirs = abstract_path[:-1]
         
-        new_dir = self.output_path
+        new_dir = '.'
         for dir in dirs:
             new_dir = os.path.join(new_dir, dir)
             # FIXME: race condition precludes parallelism
             if not os.path.isdir(new_dir):
-                os.path.mkdir(new_dir)
+                os.mkdir(new_dir)
         
         
-    def open_url(urlpath, owner):
+    def urlopen(self, urlpath, owner=None):
         """Open an URL for writing to.
         
         In the case that an URL conflict is found, raise URLWriteConflict
         """
         url = self.normalize_url(urlpath)
-        split = self.split_url(url)
+        split = (self.output_path,) + self.split_url(url)
         try:
             old_owner = self.ownership[split]
         except KeyError:

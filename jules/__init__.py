@@ -37,6 +37,9 @@ class JulesEngine(object):
             'templates',
             [os.path.join(self.src_path, 'templates')])
         config.setdefault('entries', [])
+        config['output_dir'] = os.path.join(
+            self.src_path,
+            config.get('output_dir', '_build'))
         
         return config
 
@@ -80,10 +83,12 @@ class JulesEngine(object):
         self.render_all(bundles)
         
     def render_all(self, bundles):
-        """Render queries in `entires` section of config"""
+        """Render queries in `entries` section of config"""
         for q in self.config['entries']:
             (query_name, pipeline), = q.iteritems()
             self._render_query(bundles, query_name, pipeline)
+        
+        self.query_engine.finalize()
     
     def _render_query(self, bundles, name, pipeline):
         results = bundles.values()
@@ -93,6 +98,7 @@ class JulesEngine(object):
         list(results)
 
 
+# TODO: this class seems a little like poor organization
 class PluginEngine(object):
     def __init__(self, ns='jules.plugins'):
         self.plugins = load(ns)
@@ -104,6 +110,10 @@ class PluginEngine(object):
 
         kwargs['engine'] = self
         return list(self.plugins.call(method, *args, **kwargs))
+    
+    def first(self, method, *args, **kwargs):
+        kwargs['engine'] = self
+        return self.plugins.first(method, *args, **kwargs)
 
     def pipeline(self, method, first, *args, **kwargs):
         """Call each loaded plugin with the same method, if it exists,

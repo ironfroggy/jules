@@ -29,6 +29,10 @@ TODO:
         document as a key. :>
         Maybe we add the bundle key as a builtin component so that it can be
         used, yes?
+ - General mechanism to say that a component is located by a nonstandard basename.
+ - General mechanism to say that a component is located at a nonstandard directory.
+ - General mechanism to say that a component has an unusual extension.
+   (yes, the above three are all linked.)
 
 NICE:
 - Allow authors to unify content and YAML via a custom reST directive (reST only)

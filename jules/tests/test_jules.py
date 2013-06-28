@@ -33,8 +33,12 @@ class TestTemplate(unittest.TestCase):
             # build site
             run_jules(['build', '-L', projectdir])
             
-            # FIXME: test output
-            #        currently there is no output, so this test case just makes
-            #        sure nothing throws an exception. That isn't too useful!
+            p1 = os.path.join(projectdir, '_build', 'posts', '0', 'index.html')
+            p2 = os.path.join(projectdir, '_build', 'posts', '1', 'index.html')
+            ps = os.path.join(projectdir, '_build', 'posts', 'index.html')
+            
+            self.assertEqual(open(p1).read(), "post")
+            self.assertEqual(open(p2).read(), "post")
+            self.assertEqual(open(ps).read(), "posts")
         finally:
             shutil.rmtree(tempdir)
