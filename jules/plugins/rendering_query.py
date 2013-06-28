@@ -40,7 +40,6 @@ class RenderingQuery(jules.plugins.QueryPlugin):
         template_name = template
         template = self.env.get_template(template_name)
         for item in results:
-            print "RENDER %s(%s) --> %s" % (template_name, item, url.render(item))
             with self.writer.urlopen(url.render(item)) as f:
                 f.write(template.render(item))
             
@@ -56,7 +55,6 @@ class RenderingQuery(jules.plugins.QueryPlugin):
         template = self.env.get_template(template_name)
         item = {kw: results}
 
-        print "RENDER %s(%s) --> %s" % (template_name, item, url.render(item))
         with self.writer.urlopen(url.render(item)) as f:
             f.write(template.render(item))
 

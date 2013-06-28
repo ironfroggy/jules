@@ -37,8 +37,14 @@ class TestTemplate(unittest.TestCase):
             p2 = os.path.join(projectdir, '_build', 'posts', '1', 'index.html')
             ps = os.path.join(projectdir, '_build', 'posts', 'index.html')
             
-            self.assertEqual(open(p1).read(), "post")
-            self.assertEqual(open(p2).read(), "post")
-            self.assertEqual(open(ps).read(), "posts")
+            p1 = open(p1).read()
+            p2 = open(p2).read()
+            ps = open(ps).read()
+            
+            self.assertTrue("Hello" in p1)
+            self.assertTrue("Hello" in p2)
+            self.assertTrue('<h1 class="title">Post 1 Title</h1>' in p1)
+            self.assertTrue('<h1 class="title">Post 2 Title</h1>' in p2)
+            self.assertEqual(ps, "0 1 ")
         finally:
             shutil.rmtree(tempdir)

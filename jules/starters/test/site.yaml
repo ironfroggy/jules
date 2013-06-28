@@ -7,7 +7,7 @@ bundle_defaults: {}
 entries:
  - posts: # meaningless name
     - select:
-        require_components: ['meta']
+        require_components: ['meta', 'post']
     - order_by:
         key: meta["date_published"]
     - count: 'post_num'
