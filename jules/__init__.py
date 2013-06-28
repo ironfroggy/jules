@@ -21,7 +21,13 @@ class JulesEngine(object):
         self.config = self._load_config()
         self.input_dirs = self._find_input_dirs()
         self.plugins = PluginEngine()
-        self.query_engine = jules.query.QueryEngine(self.config, self.plugins)
+        self.bundles = self.load_bundles()
+        
+        # try to defer circular dependencies until JulesEngine is as initialized
+        # as possible. Here, plugins are passed partially-initialized
+        # instances of JulesEngine. (BLEH.)
+        self.prepare_bundles()
+        self.query_engine = jules.query.QueryEngine(self)
     
     def _load_config(self):
         config_path = os.path.join(self.src_path, 'site.yaml')
@@ -73,25 +79,25 @@ class JulesEngine(object):
             for bundle in loaded_bundles:
                 bundles[bundle.key] = bundle
 
-        for k, bundle in bundles.iteritems():
-            bundle.prepare(self.config, engine=self.plugins)
-
         return bundles
     
+    def prepare_bundles(self):
+        for k, bundle in self.bundles.iteritems():
+            bundle.prepare(self)
+    
     def run(self):
-        bundles = self.load_bundles()
-        self.render_all(bundles)
+        self.render_all()
         
-    def render_all(self, bundles):
+    def render_all(self):
         """Render queries in `entries` section of config"""
         for q in self.config['entries']:
             (query_name, pipeline), = q.iteritems()
-            self._render_query(bundles, query_name, pipeline)
+            self._render_query(query_name, pipeline)
         
         self.query_engine.finalize()
     
-    def _render_query(self, bundles, name, pipeline):
-        results = bundles.values()
+    def _render_query(self, name, pipeline):
+        results = self.bundles.values()
         for stmt in pipeline:
             (dispatch_key, arg), = stmt.iteritems()
             results = self.query_engine.dispatch(dispatch_key, results, arg)
@@ -192,16 +198,17 @@ class Bundle(object):
         M = self.meta
         return M['updated_time'] or M['publish_time'] or M['created_time']
 
-    def prepare(self, config, engine):
+    def prepare(self, engine):
         """Prepare the bundle for querying and rendering."""
-        self._load_components(config, engine)
+        self._load_components(engine)
         self._postprocess_compononents()
     
-    def _load_components(self, config, engine):
+    def _load_components(self, engine):
         # FIXME: allow components to be placed in other directories via some
         # kind of mechanism. unsure how to proceed. For now, tossing this
         # feature of original system.
-        component_plugins = engine.load(subclasses=jules.plugins.ComponentPlugin)
+        component_plugins = engine.plugins.load(
+            subclasses=jules.plugins.ComponentPlugin)
         occupied_basenames = {}
         # FIXME: occupy meta fields as well?
         # FIXME: occupy config fields as well?
@@ -235,7 +242,7 @@ class Bundle(object):
             paths[basename] = (ext, subpath)
         
         for plugin_cls, paths in plugin_loads.iteritems():
-            plugin = plugin_cls(config, engine)
+            plugin = plugin_cls(engine)
             component = plugin.maybe_load(**{base:paths[base]
                 for base in plugin.basenames})
             if component is not None:

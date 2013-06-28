@@ -22,7 +22,8 @@ class RenderingQuery(jules.plugins.QueryPlugin):
     def make_env(self):
         env = jinja2.Environment(
             extensions=['jinja2.ext.do'],
-            loader=jinja2.loaders.FileSystemLoader(self.config['templates']),
+            loader=jinja2.loaders.FileSystemLoader(
+                self.engine.config['templates']),
         )
 
         env.filters.update(
@@ -61,7 +62,7 @@ class RenderingQuery(jules.plugins.QueryPlugin):
         return results
     
     def finalize(self):
-        out = self.config['output_dir']
+        out = self.engine.config['output_dir']
         temp_storage = tempfile.mkdtemp(suffix='-jules')
         
         # race conditions ahoy, unavoidable, don't care.

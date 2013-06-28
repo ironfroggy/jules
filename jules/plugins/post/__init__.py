@@ -16,14 +16,14 @@ class PostComponent(ComponentPlugin):
             subclasses=PostParserPlugin)
         for plugin in content_plugins:
             for ext in plugin.extensions:
-                ext_plugins[ext] = plugin(self.config, self.plugin_engine)
+                ext_plugins[ext] = plugin(self.engine)
     
     def maybe_load(self, post):
         (post_ext, post_f) = post
         with open(post_f) as f:
             # TODO: more than just loading.
             # FIXME: better plugin organization
-            return self.plugins.first("load_document", post_ext, f)
+            return self.engines.plugins.first("load_document", post_ext, f)
     
     def maybe_load(self, post):
         post_ext, post_path = post
@@ -34,9 +34,8 @@ class PostComponent(ComponentPlugin):
             return None
 
 class PostParserPlugin(object):
-    def __init__(self, config, plugin_engine):
-        self.config = config
-        self.plugin_engine = plugin_engine
+    def __init__(self, engine):
+        self.engine = engine
 
     def parse(self, content_file):
         src = content_file.read()

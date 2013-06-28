@@ -8,7 +8,6 @@ DONE:
 TODO:
 
 - Allow querying by directory.
-- Actually implement posts and reST documents and such.
 - implement atom query plugin: render to the atom stream, which itself is
   sorted by date and such.
   

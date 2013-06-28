@@ -7,10 +7,10 @@ def result(f):
     return lambda *args, **kwargs: ResultSet(f(*args, **kwargs))
 
 class QueryEngine(object):
-    def __init__(self, config, engine):
-        self.plugins = (engine
+    def __init__(self, engine):
+        self.plugins = (engine.plugins
             .load(subclasses=jules.plugins.QueryPlugin)
-            .produce(config, engine))
+            .produce(engine))
         self.dispatch_map = {}
         for plugin in self.plugins:
             for method_name in plugin.methods:

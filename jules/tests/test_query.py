@@ -22,9 +22,14 @@ config = dict(
     output_dir=os.devnull # crap
 )
 
+class MockJulesEngine(object):
+    def __init__(self):
+        self.config = config
+        self.plugins = jules.PluginEngine()
+
 class TestSimpleQuery(unittest.TestCase):
     bundle = Val(1)
-    e = QueryEngine(config, jules.PluginEngine())
+    e = QueryEngine(MockJulesEngine())
     rs = ResultSet(e, [bundle])
     
     def test_no_results(self):
@@ -72,7 +77,7 @@ class TestSimpleQuery(unittest.TestCase):
 class Test2Query(unittest.TestCase):
     bundle1 = Val(1)
     bundle2 = Val(2)
-    e = QueryEngine(config, jules.PluginEngine())
+    e = QueryEngine(MockJulesEngine())
     rs = ResultSet(e, [bundle1, bundle2])
 
     def test_default_sort(self):
@@ -116,7 +121,7 @@ class TestGroupBy(unittest.TestCase):
     bundle2 = Val((2,))
     bundle3 = Val((1, 2,))
     bundle4 = Val((1,))
-    e = QueryEngine(config, jules.PluginEngine())
+    e = QueryEngine(MockJulesEngine())
     rs = ResultSet(e, [bundle1, bundle2, bundle3, bundle4])
     
     def test_group_by_eq(self):
