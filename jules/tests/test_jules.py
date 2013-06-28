@@ -41,10 +41,14 @@ class TestTemplate(unittest.TestCase):
             p2 = open(p2).read()
             ps = open(ps).read()
             
+            bundlesquery = 'post1_tag post2_tag '
+            
+            self.assertTrue(p1.startswith(bundlesquery))
+            self.assertTrue(p2.startswith(bundlesquery))
             self.assertTrue("Hello" in p1)
             self.assertTrue("Hello" in p2)
             self.assertTrue('<h1 class="title">Post 1 Title</h1>' in p1)
             self.assertTrue('<h1 class="title">Post 2 Title</h1>' in p2)
-            self.assertEqual(ps, "0 1 ")
+            self.assertEqual(ps, "0 1 \n" + bundlesquery)
         finally:
             shutil.rmtree(tempdir)

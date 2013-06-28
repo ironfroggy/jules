@@ -10,7 +10,7 @@ import yaml
 from straight.plugin import load
 
 import jules
-import jules.filters, jules.query
+import jules.filters, jules.query, jules.plugins
 
 
 PACKAGE_DIR = os.path.dirname(__file__)
@@ -20,13 +20,15 @@ class JulesEngine(object):
         self.src_path = src_path
         self.config = self._load_config()
         self.input_dirs = self._find_input_dirs()
-        self.plugins = PluginEngine()
+        self.plugins = PluginDB(self)
         self.bundles = self.load_bundles()
         
         # try to defer circular dependencies until JulesEngine is as initialized
         # as possible. Here, plugins are passed partially-initialized
         # instances of JulesEngine. (BLEH.)
         self.prepare_bundles()
+        self.engine_plugins = list(self.plugins.produce_instances(
+            jules.plugins.EnginePlugin))
         self.query_engine = jules.query.QueryEngine(self)
     
     def _load_config(self):
@@ -86,15 +88,23 @@ class JulesEngine(object):
             bundle.prepare(self)
     
     def run(self):
+        self.initialize()
         self.render_all()
+        self.finalize()
+    
+    def initialize(self):
+        for plugin in self.engine_plugins:
+            plugin.initialize()
+    
+    def finalize(self):
+        for plugin in self.engine_plugins:
+            plugin.finalize()
         
     def render_all(self):
         """Render queries in `entries` section of config"""
         for q in self.config['entries']:
             (query_name, pipeline), = q.iteritems()
             self._render_query(query_name, pipeline)
-        
-        self.query_engine.finalize()
     
     def _render_query(self, name, pipeline):
         results = self.bundles.values()
@@ -105,20 +115,22 @@ class JulesEngine(object):
 
 
 # TODO: this class seems a little like poor organization
-class PluginEngine(object):
-    def __init__(self, ns='jules.plugins'):
+class PluginDB(object):
+    def __init__(self, engine, ns='jules.plugins'):
         self.plugins = load(ns)
         self.plugins._plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
+        self.instance_cache = {}
         self.ns = ns
+        self.engine = engine
 
     def middleware(self, method, *args, **kwargs):
         """Call each loaded plugin with the same method, if it exists."""
 
-        kwargs['engine'] = self
+        kwargs['engine'] = self.engine
         return list(self.plugins.call(method, *args, **kwargs))
     
     def first(self, method, *args, **kwargs):
-        kwargs['engine'] = self
+        kwargs['engine'] = self.engine
         return self.plugins.first(method, *args, **kwargs)
 
     def pipeline(self, method, first, *args, **kwargs):
@@ -127,11 +139,31 @@ class PluginEngine(object):
         next.
         """
 
-        kwargs['engine'] = self
+        kwargs['engine'] = self.engine
         return self.plugins.pipe(method, first, *args, **kwargs)
     
     def load(self, *args, **kwargs):
         return load(self.ns, *args, **kwargs)
+    
+    def produce_instances(self, base_cls):
+        """Yield instances of a plugin type, caching them.
+        
+        A class will only be instantiated once if retrieved using
+        produce_instances, even if produce_instances retrieves it many times,
+        even for different base classes / base plugin types.
+        
+        Useful because sometimes a plugin may be a plugin of multiple types,
+        but only one instance should exist for a single JulesEngine. This way
+        a single plugin can have shared state across multiple parts of the
+        production process.
+        """
+        for Plugin in self.engine.plugins.load(subclasses=base_cls):
+            try:
+                yield self.instance_cache[Plugin]
+            except KeyError:
+                yield self.instance_cache.setdefault(
+                    Plugin,
+                    Plugin(self.engine))
 
 class _BundleMeta(object):
     """This is a dict-like object for bundle meta data."""

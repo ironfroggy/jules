@@ -22,10 +22,18 @@ config = dict(
     output_dir=os.devnull # crap
 )
 
-class MockJulesEngine(object):
+class MockJulesEngine(jules.JulesEngine):
     def __init__(self):
         self.config = config
-        self.plugins = jules.PluginEngine()
+        self.plugins = jules.PluginDB(self)
+        
+        self.src_path = '/dev/null'
+        self.input_dirs = []
+        self.bundles = {}
+        
+        self.engine_plugins = self.plugins.produce_instances(
+            jules.plugins.EnginePlugin)
+        self.query_engine = jules.query.QueryEngine(self)
 
 class TestSimpleQuery(unittest.TestCase):
     bundle = Val(1)
