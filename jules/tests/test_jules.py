@@ -33,22 +33,53 @@ class TestTemplate(unittest.TestCase):
             # build site
             run_jules(['build', '-L', projectdir])
             
-            p1 = os.path.join(projectdir, '_build', 'posts', '0', 'index.html')
-            p2 = os.path.join(projectdir, '_build', 'posts', '1', 'index.html')
-            ps = os.path.join(projectdir, '_build', 'posts', 'index.html')
+            build = os.path.join(projectdir, '_build')
             
-            p1 = open(p1).read()
-            p2 = open(p2).read()
-            ps = open(ps).read()
+            self.do_has_query(build)
+            self.do_test_content(build)
+            self.do_test_atall(build)
             
-            bundlesquery = 'post1_tag post2_tag '
-            
-            self.assertTrue(p1.startswith(bundlesquery))
-            self.assertTrue(p2.startswith(bundlesquery))
-            self.assertTrue("Hello" in p1)
-            self.assertTrue("Hello" in p2)
-            self.assertTrue('<h1 class="title">Post 1 Title</h1>' in p1)
-            self.assertTrue('<h1 class="title">Post 2 Title</h1>' in p2)
-            self.assertEqual(ps, "0 1 \n" + bundlesquery)
         finally:
             shutil.rmtree(tempdir)
+    
+    def do_test_content(self, build):
+        p1 = os.path.join(build, 'content', '0', 'index.html')
+        p2 = os.path.join(build, 'content', '1', 'index.html')
+        ps = os.path.join(build, 'content', 'index.html')
+        
+        p1 = open(p1).read()
+        p2 = open(p2).read()
+        ps = open(ps).read()
+        
+        self.assertTrue("Hello" in p1)
+        self.assertTrue("Hello" in p2)
+        self.assertTrue('<h1 class="title">Post 1 Title</h1>' in p1)
+        self.assertTrue('<h1 class="title">Post 2 Title</h1>' in p2)
+        
+        link = '<a class="reference external" href="/content/1/">Hubbaloo</a>'
+        self.assertTrue(link in p1)
+        self.assertTrue(link in p2)
+        
+        self.assertEqual(ps, "0 1 ")
+    
+    def do_test_atall(self, build):
+        with open(os.path.join(build, 'atall', 'index.html')) as f:
+            self.assertEqual(f.read(), 'posts')
+        
+        with open(os.path.join(build, 'atall', 'post.html')) as f:
+            self.assertEqual(f.read(), 'post')
+    
+    def do_has_query(self, build):
+        p1 = os.path.join(build, 'query', '0', 'index.html')
+        p2 = os.path.join(build, 'query', '1', 'index.html')
+        ps = os.path.join(build, 'query', 'index.html')
+        
+        p1 = open(p1).read()
+        p2 = open(p2).read()
+        ps = open(ps).read()
+        
+        bundlesquery = 'post1_tag post2_tag '
+        
+        self.assertEqual(p1, bundlesquery)
+        self.assertEqual(p2, bundlesquery)
+        self.assertEqual(ps, bundlesquery)

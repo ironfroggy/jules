@@ -24,10 +24,10 @@ def find_bundles(engine, loader):
         files, bundles = _potential_bundles(input_dir)
         bundles = [b for b in bundles if not is_ignored_bundle(loader, b)]
         for (path, name) in bundles:
-            key = path # FIXME: windows paths.
-            if key.startswith('./'):
-                key = key[2:]
-            bundle = Bundle(key, path, defaults.copy())
+            prefix, key = os.path.split(path) # FIXME: windows paths.
+            directory = os.path.basename(prefix)
+
+            bundle = Bundle(key, directory, path, defaults.copy())
             yield bundle
 
 def _paths(parent, paths):

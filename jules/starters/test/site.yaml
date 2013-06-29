@@ -12,9 +12,26 @@ entries:
         key: meta["date_published"]
     - count: 'post_num'
     - render_each:
-        template: post.j2
-        url: /posts/{{post_num}}/
+        template: query/post.j2
+        url: /query/{{post_num}}/
     - render_all:
-        template: posts.j2
+        template: query/posts.j2
         kw: posts
-        url: /posts/
+        url: /query/
+    - render_each:
+        template: content/post.j2
+        url: /content/{{post_num}}/
+        canonical_for: "post_{{meta.key}}"
+        canonical_title: "Hubbaloo"
+    - render_all:
+        template: content/posts.j2
+        kw: posts
+        url: /content/
+    - where: ['post_num == 1']
+    - render_each:
+        template: atall/post.j2
+        url: /atall/post.html
+    - render_all:
+        template: atall/posts.j2
+        kw: posts
+        url: /atall/

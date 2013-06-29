@@ -228,8 +228,9 @@ class BundleConflict(Exception): pass
 class Bundle(object):
     """Each bundle is a collection of input files, properties, and meta data."""
 
-    def __init__(self, key, path, defaults=None):
+    def __init__(self, key, directory, path, defaults=None):
         self.key = key
+        self.directory = directory
         self.path = path
         self._metadefaults = defaults or {}
         self.components = {}
@@ -260,6 +261,7 @@ class Bundle(object):
         # FIXME: occupy meta fields as well?
         # FIXME: occupy config fields as well?
         # FIXME: allow components to depend on other components.
+        # FIXME: URGENT: allow components to depend on plugins
         
         for plugin in component_plugins:
             for basename in plugin.basenames:
@@ -296,5 +298,7 @@ class Bundle(object):
                 self.components[plugin.name] = component
 
     def _postprocess_compononents(self):
+        self.components['meta']['key'] = self.key
+        self.components['meta']['directory'] = self.directory
         self.meta = _BundleMeta(self._metadefaults, self.components['meta'])
 

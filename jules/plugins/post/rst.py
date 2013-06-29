@@ -39,7 +39,6 @@ def doclink(name, rawtext, text, lineno, inliner, options={}, content=[]):
     :param content: The directive content for customization.
     """
 
-    engine = inliner.document.settings.jules
     try:
         m = re.match(r'(.*)<([-\w]+)(#[-\w]+)?>', text)
         label, key, anchor = m.groups()
@@ -53,6 +52,8 @@ def doclink(name, rawtext, text, lineno, inliner, options={}, content=[]):
             "Cannot render a doclink for directive %s, "
             "because there is no canonical URL for %r" % (rawtext, key))
 
+    # FIXME: this creates an external reference. Need to make internal (how?)
+    # FIXME: anchor is ignored
     node = nodes.reference(
         rawtext,
         utils.unescape(label or title),
