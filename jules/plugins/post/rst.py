@@ -5,33 +5,39 @@ from docutils import nodes, utils
 from docutils.parsers.rst import roles
 
 from jules.plugins.post import PostParserPlugin
+from jules.plugins.rendering_query import Renderer
 
 class RstContentParser(PostParserPlugin):
     """Parses any .rst files in a bundle."""
 
+    dependencies = (Renderer,)
     extensions = ('.rst',)
+    
+    def __init__(self, f, engine, renderer):
+        super(RstContentParser, self).__init__(f, engine)
+        self.renderer = renderer
     
     def parse_string(self, src):
         parts = publish_parts(source=src, writer_name='html',
-            settings_overrides={})
+            settings_overrides={'url_canon': self.renderer.url_canon})
         return parts['html_body']
 
 
 def doclink(name, rawtext, text, lineno, inliner, options={}, content=[]):
     """Link to another document.
 
-Returns 2 part tuple containing list of nodes to insert into the
-document and a list of system messages. Both are allowed to be
-empty.
+    Returns 2 part tuple containing list of nodes to insert into the
+    document and a list of system messages. Both are allowed to be
+    empty.
 
-:param name: The role name used in the document.
-:param rawtext: The entire markup snippet, with role.
-:param text: The text marked with the role.
-:param lineno: The line number where rawtext appears in the input.
-:param inliner: The inliner instance that called us.
-:param options: Directive options for customization.
-:param content: The directive content for customization.
-"""
+    :param name: The role name used in the document.
+    :param rawtext: The entire markup snippet, with role.
+    :param text: The text marked with the role.
+    :param lineno: The line number where rawtext appears in the input.
+    :param inliner: The inliner instance that called us.
+    :param options: Directive options for customization.
+    :param content: The directive content for customization.
+    """
 
     engine = inliner.document.settings.jules
     try:
@@ -41,27 +47,18 @@ empty.
         label = None
         key = text
     try:
-        bundle = engine.get_bundle(key=key)
-        assert bundle.url() is not None
-    except (ValueError, AssertionError):
-        raise ValueError("Cannot render a doclink for directive %s, becuase there is no bundle %r" % (rawtext, key))
-    node = make_link_node(rawtext, label, bundle, options)
+        url, title = inliner.document.settings.url_canon[key]
+    except KeyError:
+        raise ValueError(
+            "Cannot render a doclink for directive %s, "
+            "because there is no canonical URL for %r" % (rawtext, key))
+
+    node = nodes.reference(
+        rawtext,
+        utils.unescape(label or title),
+        refuri=url,
+        **options)
 
     return [node], []
-
-
-def make_link_node(rawtext, label, bundle, options):
-    """Create a link to a BitBucket resource.
-
-:param rawtext: Text being replaced with link node.
-:param type: Link type (issue, changeset, etc.)
-:param slug: ID of the thing to link to
-:param options: Options dictionary passed to role func.
-"""
-    ref = bundle.url()
-    title = bundle.meta.get('title', bundle.key)
-    node = nodes.reference(rawtext, utils.unescape(label or title), refuri=ref,
-                           **options)
-    return node
 
 roles.register_canonical_role('doclink', doclink)

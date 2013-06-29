@@ -16,31 +16,29 @@ class PostComponent(ComponentPlugin):
             subclasses=PostParserPlugin)
         for plugin in content_plugins:
             for ext in plugin.extensions:
-                ext_plugins[ext] = plugin(self.engine)
-    
-    def maybe_load(self, post):
-        (post_ext, post_f) = post
-        with open(post_f) as f:
-            # TODO: more than just loading.
-            # FIXME: better plugin organization
-            return self.engines.plugins.first("load_document", post_ext, f)
+                ext_plugins[ext] = plugin
     
     def maybe_load(self, post):
         post_ext, post_path = post
         
         try:
-            return self.ext_plugins[post_ext].parse(open(post_path))
-        except (IOError, KeyError) as e:
+            return self.engine.plugins.produce_new_instance(
+                self.ext_plugins[post_ext],
+                open(post_path))
+        except KeyError:
             return None
 
 class PostParserPlugin(object):
-    def __init__(self, engine):
-        self.engine = engine
-
-    def parse(self, content_file):
-        src = content_file.read()
-        return self.parse_string(src)
-
+    def __init__(self, f, engine):
+        self._f = f
+        self._content = None
+        self.content_loaded = False
+    
+    def get_content(self):
+        if self.content_loaded:
+            return self._content
+        with self._f:
+            return self.parse_string(self._f.read())
 
 ##class TemplatePlugin(object):
 

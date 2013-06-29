@@ -116,11 +116,11 @@ class JulesEngine(object):
 
 # TODO: this class seems a little like poor organization
 class PluginDB(object):
-    def __init__(self, engine, ns='jules.plugins'):
-        self.plugins = load(ns)
+    def __init__(self, engine, default_ns='jules.plugins'):
+        self.plugins = load(default_ns)
         self.plugins._plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
         self.instance_cache = {}
-        self.ns = ns
+        self.ns = default_ns
         self.engine = engine
 
     def middleware(self, method, *args, **kwargs):
@@ -143,9 +143,9 @@ class PluginDB(object):
         return self.plugins.pipe(method, first, *args, **kwargs)
     
     def load(self, *args, **kwargs):
-        return load(self.ns, *args, **kwargs)
+        return load(kwargs.pop('ns', self.ns), *args, **kwargs)
     
-    def produce_instances(self, base_cls):
+    def produce_instances(self, base_cls, ns=None):
         """Yield instances of a plugin type, caching them.
         
         A class will only be instantiated once if retrieved using
@@ -157,13 +157,28 @@ class PluginDB(object):
         a single plugin can have shared state across multiple parts of the
         production process.
         """
-        for Plugin in self.engine.plugins.load(subclasses=base_cls):
-            try:
-                yield self.instance_cache[Plugin]
-            except KeyError:
-                yield self.instance_cache.setdefault(
-                    Plugin,
-                    Plugin(self.engine))
+        if ns is None:
+            ns = self.ns
+        for Plugin in self.load(subclasses=base_cls, ns=ns):
+            yield self.produce_instance(Plugin)
+    
+    def produce_instance(self, cls, *args, **kwargs):
+        try:
+            return self.instance_cache[cls]
+        except KeyError:
+            # FIXME: check for recursion using something like
+            #        self.instance_recurse_cache.
+            #        (we mutually recurse with produce_new_instance)
+            return self.instance_cache.setdefault(
+                cls,
+                self.produce_new_instance(cls, *args, **kwargs))
+    
+    def produce_new_instance(self, cls, *args, **kwargs):
+        # FIXME: recurse through base classes for deps
+        deps = map(self.produce_instance, cls.dependencies)
+        # FIXME: make engine just another dependency
+        args = args + (self.engine,) + tuple(deps)
+        return cls(*args, **kwargs)
 
 class _BundleMeta(object):
     """This is a dict-like object for bundle meta data."""

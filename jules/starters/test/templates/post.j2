@@ -1,2 +1,2 @@
 {% for item in bundles.select(require_components=['meta']).order_by(key='meta["date_published"]')%}{{item.meta.tags[1]}} {% endfor %}
-{{post|safe}}
+{{post.get_content()|safe}}

@@ -20,13 +20,13 @@ from jules import writer
 #
 # The basic problem is that posts need to know canonical URLs, but canonical
 # URLs are generated after posts...
-class RenderingQuery(jules.plugins.QueryPlugin, jules.plugins.EnginePlugin):
+class Renderer(jules.plugins.QueryPlugin, jules.plugins.EnginePlugin):
     """Query operatings for rendering results to disk."""
     methods = []
     register = method_registrar(methods)
     
     def __init__(self, *args, **kwargs):
-        super(RenderingQuery, self).__init__(*args, **kwargs)
+        super(Renderer, self).__init__(*args, **kwargs)
         self.env = self.make_env()
         self.tempdir = tempfile.mkdtemp(suffix='-jules')
         self.writer = writer.URLWriter(self.tempdir)
