@@ -5,7 +5,7 @@ from docutils import nodes, utils
 from docutils.parsers.rst import roles
 
 from jules.plugins.post import PostParserPlugin
-from jules.plugins.rendering_query import Renderer
+from jules.plugins.rendering import Renderer
 
 class RstContentParser(PostParserPlugin):
     """Parses any .rst files in a bundle."""

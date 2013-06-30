@@ -17,3 +17,7 @@ class EnginePlugin(BaseJulesPlugin):
     
     def finalize(self):
         """Called as the jules engine finalizes content."""
+
+class BundleFinderPlugin(BaseJulesPlugin):
+    def find_bundles(self):
+        """Return an iterable of Bundle instances"""

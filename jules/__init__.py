@@ -13,6 +13,11 @@ import jules
 import jules.filters, jules.query, jules.plugins
 
 
+# FIXME: namespace hack.
+NAMESPACES = ['jules.plugins']
+add_namespace = NAMESPACES.append
+import jules.plugins.post, jules.plugins.rendering
+
 PACKAGE_DIR = os.path.dirname(__file__)
 
 class JulesEngine(object):
@@ -77,8 +82,10 @@ class JulesEngine(object):
         """Load a site by loading configuration, plugins, packs, and bundles."""
 
         bundles = {}
-        for loaded_bundles in self.plugins.middleware('find_bundles', loader=self):
-            for bundle in loaded_bundles:
+        finders = self.plugins.produce_instances(
+            jules.plugins.BundleFinderPlugin)
+        for finder in finders:
+            for bundle in finder.find_bundles():
                 bundles[bundle.key] = bundle
 
         return bundles
@@ -113,39 +120,21 @@ class JulesEngine(object):
             results = self.query_engine.dispatch(dispatch_key, results, arg)
         list(results)
 
-
-# TODO: this class seems a little like poor organization
 class PluginDB(object):
-    def __init__(self, engine, default_ns='jules.plugins'):
-        self.plugins = load(default_ns)
-        self.plugins._plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
+    def __init__(self, engine, namespaces=None):
         self.instance_cache = {}
-        self.ns = default_ns
+        self.nss = NAMESPACES if namespaces is None else namespaces
         self.engine = engine
-
-    def middleware(self, method, *args, **kwargs):
-        """Call each loaded plugin with the same method, if it exists."""
-
-        kwargs['engine'] = self.engine
-        return list(self.plugins.call(method, *args, **kwargs))
-    
-    def first(self, method, *args, **kwargs):
-        kwargs['engine'] = self.engine
-        return self.plugins.first(method, *args, **kwargs)
-
-    def pipeline(self, method, first, *args, **kwargs):
-        """Call each loaded plugin with the same method, if it exists,
-        passing the return value of each as the first argument of the
-        next.
-        """
-
-        kwargs['engine'] = self.engine
-        return self.plugins.pipe(method, first, *args, **kwargs)
     
     def load(self, *args, **kwargs):
-        return load(kwargs.pop('ns', self.ns), *args, **kwargs)
+        # FIXME: namespace hack
+        plugins = []
+        for ns in self.nss:
+            plugins.extend(load(ns, *args, **kwargs))
+
+        return plugins
     
-    def produce_instances(self, base_cls, ns=None):
+    def produce_instances(self, base_cls):
         """Yield instances of a plugin type, caching them.
         
         A class will only be instantiated once if retrieved using
@@ -157,9 +146,12 @@ class PluginDB(object):
         a single plugin can have shared state across multiple parts of the
         production process.
         """
-        if ns is None:
-            ns = self.ns
-        for Plugin in self.load(subclasses=base_cls, ns=ns):
+        seen = set()
+        for Plugin in self.load(subclasses=base_cls):
+            # FIXME: This nonsense is because of the namespace hack.
+            if Plugin in seen:
+                continue
+            seen.add(Plugin)
             yield self.produce_instance(Plugin)
     
     def produce_instance(self, cls, *args, **kwargs):

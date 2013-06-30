@@ -1,6 +1,9 @@
 from straight.plugin import load
 
+import jules
 from jules.plugins import ComponentPlugin
+
+jules.add_namespace(__package__)
 
 class PostComponent(ComponentPlugin):
     name = 'post'
@@ -11,6 +14,9 @@ class PostComponent(ComponentPlugin):
         
         # FIXME: conflict detection
         self.ext_plugins = ext_plugins = {}
+        # FIXME: content plugins don't work consistently with rest of plugins.
+        #        i.e. they're instantiated once per time, and in addition,
+        #        have to be present in the right namespace package.
         content_plugins = load(
             'jules.plugins.post',
             subclasses=PostParserPlugin)

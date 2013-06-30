@@ -13,8 +13,6 @@ class URLWriteConflict(Exception):
         self.new = new
         super(URLWriteConflict, self).__init__(url, old, new)
 
-# FIXME: "with writer.as_owned('owner'): ..."
-# FIXME: private variables
 # FIXME: pass this into plugins
 # FIXME: add shutil wrapping
 class URLWriter(object):
