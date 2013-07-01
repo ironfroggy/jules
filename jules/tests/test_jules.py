@@ -35,9 +35,10 @@ class TestTemplate(unittest.TestCase):
             
             build = os.path.join(projectdir, '_build')
             
-            self.do_has_query(build)
+            self.do_test_query(build)
             self.do_test_content(build)
             self.do_test_atall(build)
+            self.do_test_static(build)
             
         finally:
             shutil.rmtree(tempdir)
@@ -69,7 +70,7 @@ class TestTemplate(unittest.TestCase):
         with open(os.path.join(build, 'atall', 'post.html')) as f:
             self.assertEqual(f.read(), 'post')
     
-    def do_has_query(self, build):
+    def do_test_query(self, build):
         p1 = os.path.join(build, 'query', '0', 'index.html')
         p2 = os.path.join(build, 'query', '1', 'index.html')
         ps = os.path.join(build, 'query', 'index.html')
@@ -83,3 +84,10 @@ class TestTemplate(unittest.TestCase):
         self.assertEqual(p1, bundlesquery)
         self.assertEqual(p2, bundlesquery)
         self.assertEqual(ps, bundlesquery)
+
+    def do_test_static(self, build):
+        p1 = open(os.path.join(build, 'static1.txt')).read()
+        p2 = open(os.path.join(build, 'static2.txt')).read()
+        
+        self.assertEqual(p1, 'static file 1')
+        self.assertEqual(p2, 'static file 2')

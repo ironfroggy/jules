@@ -1,33 +1,21 @@
 Ideas for improving Jules:
 
-CURRENTLY WORKING ON:
- - plugins depend on config fields as well as other plugins
- (then)
- - plugins depend on engine rather than always having it passed in.
-
 TODO:
 
-- Allow querying by directory.
-- implement atom query plugin: render to the atom stream, which itself is
-  sorted by date and such.
-  
-  Note that this has a lot of shared functionality with rendering to an URL.
-  Likely we want to share the function using a more general "rendering" plugin
-  which can be called by both.
-- Possibly move all instantiation/usage of plugin subclasses into the plugin
-  engine thing, including name/slot registration and such? who knows.
-- "pack support"???
-- static files component
+ - Allow querying by directory.
+ - Integrate packs as bundles that just have a static component (effectively
+   invisible for any reasonable query (only meta is present))
+ - implement atom query/rendering plugin: render to the atom stream, which
+   itself is sorted by date and such and rendered to a file.
  - General mechanism to say that a component is located by a nonstandard basename.
  - General mechanism to say that a component is located at a nonstandard directory.
  - General mechanism to say that a component has an unusual extension.
-   (yes, the above three are all linked.)
  - Make engine just another dependency type for plugins.
 
 NICE:
 - Allow authors to unify content and YAML via a custom reST directive (reST only)
 - move defaults into centralized location(s) rather than hardcoding when retrieved.
-- Replace eval() with using jinja's expression syntax/semantics.
+- Replace eval() with using jinja's expression syntax/semantics?
 - dead link detection
 - unused content detection
 - detection of backwards-compatibility breakage in URLs

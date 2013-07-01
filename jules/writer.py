@@ -28,18 +28,7 @@ class URLWriter(object):
     
     @staticmethod
     def split_url(urlpath):
-        """
-        Convert absolute URL path to an abstract path (list of path components)
-        """
-        head = urlpath
-        reversed_split = []
-        while head != '/':
-            if not head:
-                raise ValueError("relative paths not allowed")
-            
-            head, tail = posixpath.split(head)
-            reversed_split.append(tail)
-        return tuple(reversed(reversed_split))
+        return split_path(urlpath, posixpath)
     
     def ensure_directories(self, abstract_path):
         dirs = abstract_path[:-1]
@@ -70,4 +59,13 @@ class URLWriter(object):
         else:
             raise URLWriteConflict(url, old_owner, owner)
 
-
+def split_path(path, pathmodule=os.path):
+    head = path
+    reversed_split = []
+    while head != '/':
+        if not head:
+            raise ValueError("relative paths not allowed (given %r)" % path)
+        
+        head, tail = pathmodule.split(head)
+        reversed_split.append(tail)
+    return tuple(reversed(reversed_split))
