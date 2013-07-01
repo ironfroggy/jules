@@ -1,5 +1,10 @@
 Ideas for improving Jules:
 
+CURRENTLY WORKING ON:
+ - plugins depend on config fields as well as other plugins
+ (then)
+ - plugins depend on engine rather than always having it passed in.
+
 TODO:
 
 - Allow querying by directory.

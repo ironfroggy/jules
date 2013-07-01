@@ -1,7 +1,7 @@
 from straight.plugin import load
 
 import jules
-from jules.plugins import ComponentPlugin
+from jules.plugins import ComponentPlugin, BaseJulesPlugin
 
 jules.add_namespace(__package__)
 
@@ -34,11 +34,12 @@ class PostComponent(ComponentPlugin):
         except KeyError:
             return None
 
-class PostParserPlugin(object):
-    def __init__(self, f, engine):
+class PostParserPlugin(BaseJulesPlugin):
+    def __init__(self, f, *args, **kwargs):
         self._f = f
         self._content = None
         self.content_loaded = False
+        super(PostParserPlugin, self).__init__(*args, **kwargs)
     
     def get_content(self):
         if self.content_loaded:

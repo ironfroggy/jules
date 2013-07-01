@@ -10,12 +10,8 @@ from jules.plugins.rendering import Renderer
 class RstContentParser(PostParserPlugin):
     """Parses any .rst files in a bundle."""
 
-    dependencies = (Renderer,)
+    dependencies = {'renderer': Renderer}
     extensions = ('.rst',)
-    
-    def __init__(self, f, engine, renderer):
-        super(RstContentParser, self).__init__(f, engine)
-        self.renderer = renderer
     
     def parse_string(self, src):
         parts = publish_parts(source=src, writer_name='html',

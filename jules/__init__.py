@@ -45,14 +45,8 @@ class JulesEngine(object):
             raise ValueError(
                 "No configuration file found. Looking for site.yaml at `{}`."
                 .format(self.src_path))
-        
-        config.setdefault(
-            'templates',
-            [os.path.join(self.src_path, 'templates')])
+
         config.setdefault('entries', [])
-        config['output_dir'] = os.path.join(
-            self.src_path,
-            config.get('output_dir', '_build'))
         
         return config
 
@@ -126,7 +120,7 @@ class PluginDB(object):
         self.nss = NAMESPACES if namespaces is None else namespaces
         self.engine = engine
     
-    def load(self, *args, **kwargs):
+    def _load(self, *args, **kwargs):
         # FIXME: namespace hack
         plugins = []
         for ns in self.nss:
@@ -147,7 +141,7 @@ class PluginDB(object):
         production process.
         """
         seen = set()
-        for Plugin in self.load(subclasses=base_cls):
+        for Plugin in self._load(subclasses=base_cls):
             # FIXME: This nonsense is because of the namespace hack.
             if Plugin in seen:
                 continue
@@ -167,9 +161,13 @@ class PluginDB(object):
     
     def produce_new_instance(self, cls, *args, **kwargs):
         # FIXME: recurse through base classes for deps
-        deps = map(self.produce_instance, cls.dependencies)
+        depmap = {depname: self.produce_instance(depcls)
+            for depname, depcls in (cls.dependencies or {}).iteritems()}
+        confmap = {confname: self.engine.config[confv]
+            for confname, confv in (cls.config or {}).iteritems()
+            if confv in self.engine.config}
         # FIXME: make engine just another dependency
-        args = args + (self.engine,) + tuple(deps)
+        args = args + (self.engine, depmap, confmap)
         return cls(*args, **kwargs)
 
 class _BundleMeta(object):
@@ -247,13 +245,11 @@ class Bundle(object):
         # FIXME: allow components to be placed in other directories via some
         # kind of mechanism. unsure how to proceed. For now, tossing this
         # feature of original system.
-        component_plugins = engine.plugins.load(
-            subclasses=jules.plugins.ComponentPlugin)
+        component_plugins = engine.plugins.produce_instances(
+            jules.plugins.ComponentPlugin)
         occupied_basenames = {}
         # FIXME: occupy meta fields as well?
-        # FIXME: occupy config fields as well?
         # FIXME: allow components to depend on other components.
-        # FIXME: URGENT: allow components to depend on plugins
         
         for plugin in component_plugins:
             for basename in plugin.basenames:
@@ -282,8 +278,7 @@ class Bundle(object):
             paths = plugin_loads.setdefault(plugin, {})
             paths[basename] = (ext, subpath)
         
-        for plugin_cls, paths in plugin_loads.iteritems():
-            plugin = plugin_cls(engine)
+        for plugin, paths in plugin_loads.iteritems():
             component = plugin.maybe_load(**{base:paths[base]
                 for base in plugin.basenames})
             if component is not None:

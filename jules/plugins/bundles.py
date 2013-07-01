@@ -4,10 +4,19 @@ import functools
 
 from jules import Bundle
 from jules.plugins import ComponentPlugin, BundleFinderPlugin
+from jules.utils import named_keywords
 
 class DefaultBundleFinder(BundleFinderPlugin):
+    config = named_keywords(
+        'bundle_defaults',
+        'ignore')
+
+    def init(self):
+        self.config.setdefault('ignore', ())
+        self.config.setdefault('bundle_defaults', {})
+
     def is_ignored_bundle(self, bundle):
-        for ignore_pattern in self.engine.config.get('ignore', ()):
+        for ignore_pattern in self.config.ignore:
             if fnmatch(bundle[1], ignore_pattern):
                 return True
         return False
@@ -19,7 +28,7 @@ class DefaultBundleFinder(BundleFinderPlugin):
         Any directory found in any of the input directories is a bundle, unless it's
         listed to be ignored.
         """
-        defaults = self.engine.config.get('bundle_defaults', {})
+        defaults = self.config.bundle_defaults
 
         for input_dir in self.engine.input_dirs:
             files, bundles = _potential_bundles(input_dir)

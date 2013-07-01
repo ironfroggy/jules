@@ -6,24 +6,28 @@ import jinja2
 
 import jules
 from jules.query import cache, unwrapping_kwargs, method_registrar
-from jules import writer
+from jules import writer, utils
 
 
 class CanonConflictError(Exception): pass
 
 class QueryRenderer(jules.plugins.QueryPlugin, jules.plugins.rendering.RenderingPlugin):
     
+    config = utils.named_keywords('templates')
+    
     methods = []
     register = method_registrar(methods)
     
-    def __init__(self, *args, **kwargs):
-        super(QueryRenderer, self).__init__(*args, **kwargs)
-        self.render_actions = [] # [(url, canon,        renderer, (item,))]
+    def init(self):
+        self.config.setdefault('templates',
+            [os.path.join(self.engine.src_path, 'templates')])
+        
+        self.render_actions = [] # [(url, canon, renderer, (item,))]
         
         self.env = jinja2.Environment(
             extensions=['jinja2.ext.do'],
             loader=jinja2.loaders.FileSystemLoader(
-                self.engine.config['templates']),
+                self.config.templates),
             undefined=jinja2.StrictUndefined
         )
 
@@ -31,6 +35,7 @@ class QueryRenderer(jules.plugins.QueryPlugin, jules.plugins.rendering.Rendering
             (filter_name, func)
             for filter_name, func in vars(jules.filters).iteritems()
             if not filter_name.startswith('_'))
+        
     
     def item_withbundles(self, item):
         d = dict(

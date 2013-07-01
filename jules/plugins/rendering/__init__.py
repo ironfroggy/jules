@@ -35,11 +35,14 @@ class Renderer(jules.plugins.EnginePlugin):
        This is also done during finalization, but in final_move()
     """
     
-    def __init__(self, *args, **kwargs):
-        super(Renderer, self).__init__(*args, **kwargs)
+    def init(self):
+        self.config.output_dir = os.path.join(
+            self.engine.src_path,
+            getattr(self.config, 'output_dir', '_build'))
+
         self.url_canon = {} # map names -> (url, title)
         self.name_canon = {} # map urls -> (name, title)
-        
+
         self.tempdir = tempfile.mkdtemp(suffix='-jules')
     
     def finalize(self):
@@ -65,7 +68,7 @@ class Renderer(jules.plugins.EnginePlugin):
         self.renders = []
 
     def final_move(self):
-        out = self.engine.config['output_dir']
+        out = self.config.output_dir
 
         # race conditions ahoy, unavoidable, don't care.
         # should I even bother with this?
@@ -131,4 +134,3 @@ class RenderingPlugin(jules.plugins.BaseJulesPlugin):
         is a file whose content is at the URL.
         """
         raise NotImplementedError
-

@@ -1,9 +1,23 @@
+from jules import utils
+
+class PluginDefinitionError(Exception):
+    pass
+
 class BaseJulesPlugin(object):
-    dependencies = ()
+    dependencies = None
+    config = None
     
-    # TODO: implement *dep_instances ?
-    def __init__(self, engine):
+    def __init__(self, engine, deps, conf):
         self.engine = engine
+        for k, v in deps.iteritems():
+            setattr(self, k, v)
+
+        self.config = utils.Namespace(conf)
+        
+        self.init()
+    
+    def init(self):
+        """Convenience init method, instead of that super() nonsense."""
 
 class ComponentPlugin(BaseJulesPlugin):
     pass
