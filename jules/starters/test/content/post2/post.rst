@@ -1,3 +1,8 @@
+.. jules::
+
+    title: Post 2 Title Override
+    subtitle: Post 2 subtitle override
+
 ============
 Post 2 Title
 ============

@@ -1,24 +1,60 @@
 Ideas for improving Jules:
 
+NEXT:
+ ?
+
 TODO:
 
  - Allow querying by directory.
- - Integrate packs as bundles that just have a static component (effectively
-   invisible for any reasonable query (only meta is present))
  - implement atom query/rendering plugin: render to the atom stream, which
    itself is sorted by date and such and rendered to a file.
- - General mechanism to say that a component is located by a nonstandard basename.
- - General mechanism to say that a component is located at a nonstandard directory.
- - General mechanism to say that a component has an unusual extension.
  - Make engine just another dependency type for plugins.
+ - Packs:
+   - bundle-directory-specific default bundle metas
+   - specify exact path of a component, including basename, ext. Special-case ''
+     so that whole directory of bundle becomes just that component!
+
+     Don't forget to make sure that it's relative to the bundle root, but
+     can't escape the bundle root.
+     (do something like join '/', ..., then normpath, then relpath '/')
+
+   - way to ignore all the bundles in a directory, except a whitelist
+     (and why not vice versa, too?)
+   - Thus, packs make dir of bundles whose only component is 'static'.
+     These bundles will be missing any of the components that
+     usually constitute actual content rendered by the pipeline, so they are
+     effectively invisible
+
+ - ability to specify an extra component instances with new basenames (via meta)
+ - component-specific meta overrides via `basename.meta.yaml`
+ - The above needs some way of identifying components within the bundle,
+   maybe by more than just the component field... (nah?)
+ - generated admin page with lotsa information
+ - publishing date support. Make bundles invisible before that date.
+   probably don't want to make this super general, since I want to automatically
+   pull this information someday to make cron jobs to update everything...
+   hard to do that when it's general, yeah?
 
 NICE:
-- Allow authors to unify content and YAML via a custom reST directive (reST only)
-- move defaults into centralized location(s) rather than hardcoding when retrieved.
 - Replace eval() with using jinja's expression syntax/semantics?
-- dead link detection
 - unused content detection
 - detection of backwards-compatibility breakage in URLs
   (want so that never happens.)
-- don't regenerate content that hasn't been updated
+- don't regenerate content that hasn't been updated -- hard, considering the
+  query system...
 - definition of rewrite rules for web providers with rewrite rules.
+- framework for caching and using cached content?
+- html (and other content) postprocessing
+  - dead link detection
+  - minimize html as as to not use classes that none of the stylesheets use
+    (optional, obviously, since it's error-prone).
+  - special handling of "jules:" URLs or similar, to link to URLs with
+    a canonical name? e.g. "jules:my_blog_post" -> whatever URL has that name
+  - minify html and other content (esp js, css)
+ - Some way to integrate a G+ feed into the blog feed (:O)
+
+MAYBE:
+
+ - General mechanism to say that a component is located by a nonstandard basename.
+ - General mechanism to say that a component is located at a nonstandard directory.
+ - General mechanism to say that a component has an unusual extension.

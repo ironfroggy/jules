@@ -20,7 +20,7 @@ class BaseJulesPlugin(object):
         """Convenience init method, instead of that super() nonsense."""
 
 class ComponentPlugin(BaseJulesPlugin):
-    pass
+    component_dependencies = ()
 
 class QueryPlugin(BaseJulesPlugin):
     pass

@@ -11,6 +11,7 @@ from straight.plugin import load
 
 import jules
 import jules.filters, jules.query, jules.plugins
+from jules import utils
 
 
 # FIXME: namespace hack.
@@ -26,6 +27,7 @@ class JulesEngine(object):
         self.config = self._load_config()
         self.input_dirs = self._find_input_dirs()
         self.plugins = PluginDB(self)
+        self.component_loader = ComponentLoader(self.plugins)
         self.bundles = self.load_bundles()
         
         # try to defer circular dependencies until JulesEngine is as initialized
@@ -170,6 +172,59 @@ class PluginDB(object):
         args = args + (self.engine, depmap, confmap)
         return cls(*args, **kwargs)
 
+class ComponentLoader(object):
+    def __init__(self, plugins):
+        self.plugins = plugins
+        
+        self.init_components()
+    
+    def init_components(self):
+        # FIXME: allow components to be placed in other directories via some
+        # kind of mechanism. unsure how to proceed. For now, tossing this
+        # feature of original system.
+        self.component_plugins = list(self.plugins.produce_instances(
+            jules.plugins.ComponentPlugin))
+        # FIXME: allow components to depend on other components.
+        
+        self.order_components()
+        self.init_occupied_basenames()
+    
+    def order_components(self):
+        components_byname = {component.name: component
+            for component in self.component_plugins}
+        
+        G_prefilter = {name: component.component_dependencies
+            for name, component in components_byname.iteritems()}
+        
+        G_postfilter = {}
+        for name, deps in G_prefilter.iteritems():
+            # FIXME: log warning [that's why this isn't a dict comprehension]
+            if any(dep not in components_byname for dep in deps):
+                continue
+            G_postfilter[name] = deps
+        
+        self.component_plugins = [components_byname[name]
+            for name in utils.topsort(G_postfilter)]
+        
+    
+    def init_occupied_basenames(self):
+        self.occupied_basenames = {}
+        # FIXME: occupy meta fields as well?
+        for plugin in self.component_plugins:
+            for basename in plugin.basenames:
+                if basename in self.occupied_basenames:
+                    other = self.occupied_basenames[basename]
+                    all_conflicts = ', '.join(
+                        sorted(set(other.basenames) & set(plugin.basenames)))
+                    raise BundleConflict(
+                        "{p1} and {p2} conflict over these basenames: {bases}"
+                        .format(
+                            bases = all_conflicts,
+                            p1 = other.__name__,
+                            p2 = plugin.__name__))
+            # no conflict
+            self.occupied_basenames.update(dict.fromkeys(plugin.basenames, plugin))
+
 class _BundleMeta(object):
     """This is a dict-like object for bundle meta data."""
 
@@ -242,44 +297,31 @@ class Bundle(object):
         self._postprocess_compononents()
     
     def _load_components(self, engine):
-        # FIXME: allow components to be placed in other directories via some
-        # kind of mechanism. unsure how to proceed. For now, tossing this
-        # feature of original system.
-        component_plugins = engine.plugins.produce_instances(
-            jules.plugins.ComponentPlugin)
-        occupied_basenames = {}
-        # FIXME: occupy meta fields as well?
-        # FIXME: allow components to depend on other components.
-        
-        for plugin in component_plugins:
-            for basename in plugin.basenames:
-                if basename in occupied_basenames:
-                    other = occupied_basenames[basename]
-                    all_conflicts = ', '.join(
-                        sorted(set(other.basenames) & set(plugin.basenames)))
-                    raise BundleConflict(
-                        "{p1} and {p2} conflict over these basenames: {bases}"
-                        .format(
-                            bases = all_conflicts,
-                            p1 = other.__name__,
-                            p2 = plugin.__name__))
-            # no conflict
-            occupied_basenames.update(dict.fromkeys(plugin.basenames, plugin))
-        
+        loader = engine.component_loader
         plugin_loads = {}
         for sub in os.listdir(self.path):
             basename, ext = os.path.splitext(sub)
             subpath = os.path.join(self.path, sub)
             try:
-                plugin = occupied_basenames[basename]
+                plugin = loader.occupied_basenames[basename]
             except KeyError:
                 # FIXME: warn about unused file?
                 continue
             paths = plugin_loads.setdefault(plugin, {})
             paths[basename] = (ext, subpath)
         
-        for plugin, paths in plugin_loads.iteritems():
-            component = plugin.maybe_load(**{base:paths[base]
+        for plugin in loader.component_plugins:
+            try:
+                paths = plugin_loads[plugin]
+            except KeyError:
+                # bundle doesn't have plugin
+                continue
+
+            # FIXME: handle missing dependencies gracefully
+            deps = {dep: self.components[dep]
+                for dep in plugin.component_dependencies}
+            args = [deps] if deps else []
+            component = plugin.maybe_load(*args, **{base:paths[base]
                 for base in plugin.basenames})
             if component is not None:
                 self.components[plugin.name] = component

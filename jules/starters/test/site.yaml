@@ -27,6 +27,9 @@ entries:
         template: content/posts.j2
         kw: posts
         url: /content/
+    - render_each:
+        template: rstmeta/post.j2
+        url: /rstmeta/{{post_num}}/
     - where: ['post_num == 1']
     - render_each:
         template: atall/post.j2

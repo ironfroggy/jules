@@ -8,6 +8,7 @@ jules.add_namespace(__package__)
 class PostComponent(ComponentPlugin):
     name = 'post'
     basenames = ['post']
+    component_dependencies = ['meta']
     
     def __init__(self, *args, **kwargs):
         super(PostComponent, self).__init__(*args, **kwargs)
@@ -24,20 +25,23 @@ class PostComponent(ComponentPlugin):
             for ext in plugin.extensions:
                 ext_plugins[ext] = plugin
     
-    def maybe_load(self, post):
+    def maybe_load(self, components, post):
+        meta = components['meta']
         post_ext, post_path = post
         
         try:
             return self.engine.plugins.produce_new_instance(
                 self.ext_plugins[post_ext],
-                open(post_path))
+                open(post_path),
+                meta)
         except KeyError:
             return None
 
 class PostParserPlugin(BaseJulesPlugin):
-    def __init__(self, f, *args, **kwargs):
+    def __init__(self, f, meta, *args, **kwargs):
         self._f = f
         self._content = None
+        self.meta = meta
         self.content_loaded = False
         super(PostParserPlugin, self).__init__(*args, **kwargs)
     

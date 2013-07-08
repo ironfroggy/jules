@@ -39,6 +39,7 @@ class TestTemplate(unittest.TestCase):
             self.do_test_content(build)
             self.do_test_atall(build)
             self.do_test_static(build)
+            self.do_test_rstmeta(build)
             
         finally:
             shutil.rmtree(tempdir)
@@ -91,3 +92,10 @@ class TestTemplate(unittest.TestCase):
         
         self.assertEqual(p1, 'static file 1')
         self.assertEqual(p2, 'static file 2')
+    
+    def do_test_rstmeta(self, build):
+        p1 = open(os.path.join(build, 'rstmeta', '0', 'index.html')).read()
+        p2 = open(os.path.join(build, 'rstmeta', '1', 'index.html')).read()
+        
+        self.assertEqual(p1, 'Post 1 Title\nPost 1 subtitle')
+        self.assertEqual(p2, 'Post 2 Title Override\nPost 2 subtitle override')
