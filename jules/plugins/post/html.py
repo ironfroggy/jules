@@ -5,9 +5,5 @@ class HTMLContentParser(PostParserPlugin):
 
     extensions = ('.html',)
 
-    def parse(self, content_file):
-        src = content_file.read()
-        return src
-
-    def parse_string(self, src):
+    def parse_post(self, meta, src):
         return src

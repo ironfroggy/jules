@@ -2,11 +2,12 @@ import os
 import tempfile
 import shutil
 
+import genshi
 import jinja2
 
 import jules
 from jules.query import cache, unwrapping_kwargs, method_registrar
-from jules import writer
+from jules import writer, utils
 
 jules.add_namespace(__package__)
 
@@ -45,7 +46,15 @@ class Renderer(jules.plugins.EnginePlugin):
 
         self.tempdir = tempfile.mkdtemp(suffix='-jules')
     
+    def init_postprocessors(self):
+        postprocessors = self.engine.plugins.produce_instances(
+            MutatingPostProcessingPlugin)
+        self.postprocessors = list(utils.topsort(
+            {p: p.processing_dependencies
+            for p in postprocessors}))
+    
     def finalize(self):
+        self.init_postprocessors() # FIXME: circular dependencies are disgusting man.
         self.collect_urls()
         self.render_urls()
         self.final_move()
@@ -53,19 +62,30 @@ class Renderer(jules.plugins.EnginePlugin):
     def collect_urls(self):
         self.renders = []
         
-        for url, canon, template, args in self.get_render_actions():
+        for url, canon, data in self.get_render_actions():
             if canon is not None:
                 name, title = canon
                 self.update_canon(name, title, url)
-            self.renders.append((url, template, args))
+            self.renders.append((url, data))
     
     def render_urls(self):
         urlwriter = writer.URLWriter(self.tempdir)
-        for url, template, args in self.renders:
+        for url, data in self.renders:
+            data = self.postprocess_render(url, data)
             with urlwriter.urlopen(url) as f:
-                template.render(f, *args)
+                f.write(data)
         
         self.renders = []
+    
+    def postprocess_render(self, url, data):
+        # FIXME: get something more elegant working...
+        if url.endswith("/") or url.endswith(".htm") or url.endswith(".html"):
+            e = genshi.HTML(data)
+            for postprocessor in self.postprocessors:
+                e |= postprocessor.process_etree
+            
+            return e.render()
+        return data
 
     def final_move(self):
         out = self.config.output_dir
@@ -134,3 +154,16 @@ class RenderingPlugin(jules.plugins.BaseJulesPlugin):
         is a file whose content is at the URL.
         """
         raise NotImplementedError
+
+
+class MutatingPostProcessingPlugin(jules.plugins.BaseJulesPlugin):
+    processing_dependencies = ()
+    def process_etree(self, e):
+        """Process XML or HTML DOM, mutating it."""
+        pass
+
+# TODO:
+##BEGINNING = 0
+##END = -1
+##ANYWHERE = None
+##class NonmutatingPostProcessingPlugin(jules.plugins.BaseJulesPlugin):

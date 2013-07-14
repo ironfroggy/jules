@@ -22,7 +22,8 @@ class StaticComponent(ComponentPlugin, RenderingPlugin):
         for d in self.config.static_directories:
             self.maybe_load(('', d))
     
-    def maybe_load(self, static):
+    def maybe_load(self, static=None):
+        if static is None: return
         ext, path = static
         # ignore ext, we don't really care (bleh.)
         
@@ -35,19 +36,11 @@ class StaticComponent(ComponentPlugin, RenderingPlugin):
                 filepath = os.path.join(root, filename)
                 filesubpath = os.path.join(subpath, filename)
                 url = posixpath.join('/', *writer.split_path(filesubpath))
-                self.render_actions.append((
-                    url,
-                    None,
-                    FileCopyRenderer(filepath),
-                    ()))
+                with open(filepath) as f:
+                    self.render_actions.append((
+                        url,
+                        None,
+                        f.read()))
     
     def get_render_actions(self):
         return self.render_actions
-
-class FileCopyRenderer(object):
-    def __init__(self, path):
-        self.path = path
-
-    def render(self, f):
-        with open(self.path) as origin:
-            shutil.copyfileobj(origin, f)

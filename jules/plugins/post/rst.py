@@ -11,19 +11,16 @@ from jules.plugins.rendering import Renderer
 
 class RstContentParser(PostParserPlugin):
     """Parses any .rst files in a bundle."""
-
-    dependencies = {'renderer': Renderer}
     extensions = ('.rst',)
     
-    def parse_string(self, src):
+    def parse_post(self, meta, src):
         parts = publish_parts(source=src, writer_name='html',
             settings_overrides={
-                'url_canon': self.renderer.url_canon,
-                'meta': self.meta
+                'meta': meta
         })
         
-        self.meta.setdefault('title', parts['title'])
-        self.meta.setdefault('subtitle', parts['subtitle'])
+        meta.setdefault('title', parts['title'])
+        meta.setdefault('subtitle', parts['subtitle'])
         return parts['html_body']
 
 
@@ -48,20 +45,14 @@ def doclink(name, rawtext, text, lineno, inliner, options={}, content=[]):
         label, key, anchor = m.groups()
     except (AttributeError, re.error):
         label = None
+        anchor = None
         key = text
-    try:
-        url, title = inliner.document.settings.url_canon[key]
-    except KeyError:
-        raise ValueError(
-            "Cannot render a doclink for directive %s, "
-            "because there is no canonical URL for %r" % (rawtext, key))
 
     # FIXME: this creates an external reference. Need to make internal (how?)
-    # FIXME: anchor is ignored
     node = nodes.reference(
         rawtext,
-        utils.unescape(label or title),
-        refuri=url,
+        utils.unescape(label or ''),
+        refuri="jules:canon/" + key + ("#" + anchor if anchor else ''),
         **options)
 
     return [node], []
@@ -75,18 +66,15 @@ class JulesMeta(Directive):
     has_content = True
 
     def run(self):
-        dicts = []
-        for content in self.content:
-            try:
-                dicts.append(yaml.load(content))
-            except yaml.parser.ParserError:
-                raise ValueError("Invalid YAML data")
-        
+        try:
+            d = yaml.load('\n'.join(self.content))
+        except yaml.parser.ParserError:
+            raise ValueError("Invalid YAML data")
+
         # docutils is stupid.
         meta = self.state_machine.document.settings.meta
-        for d in dicts:
-            update_meta(meta, d)
-        
+        update_meta(meta, d)
+
         return []
 
 directives.register_directive("jules", JulesMeta)

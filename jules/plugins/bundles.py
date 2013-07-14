@@ -60,7 +60,9 @@ class MetaComponent(ComponentPlugin):
     name = 'meta'
     basenames = ['meta']
     
-    def maybe_load(self, meta):
+    def maybe_load(self, meta=None):
+        if meta is None:
+            return {}
         (meta_ext, meta_f) = meta
         with open(meta_f) as f:
             if meta_ext == '.json':

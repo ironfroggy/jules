@@ -311,18 +311,15 @@ class Bundle(object):
             paths[basename] = (ext, subpath)
         
         for plugin in loader.component_plugins:
-            try:
-                paths = plugin_loads[plugin]
-            except KeyError:
-                # bundle doesn't have plugin
-                continue
+            paths = plugin_loads.get(plugin, {})
 
             # FIXME: handle missing dependencies gracefully
             deps = {dep: self.components[dep]
                 for dep in plugin.component_dependencies}
             args = [deps] if deps else []
             component = plugin.maybe_load(*args, **{base:paths[base]
-                for base in plugin.basenames})
+                for base in plugin.basenames
+                if base in paths})
             if component is not None:
                 self.components[plugin.name] = component
 

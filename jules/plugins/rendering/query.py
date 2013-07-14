@@ -65,8 +65,7 @@ class QueryRenderer(jules.plugins.QueryPlugin, jules.plugins.rendering.Rendering
             self.render_actions.append((
                 final_url,
                 canonical,
-                TemplateFileRenderer(template),
-                (item,)))
+                template.render(item)))
 
             yield item
 
@@ -88,8 +87,7 @@ class QueryRenderer(jules.plugins.QueryPlugin, jules.plugins.rendering.Rendering
         self.render_actions.append((
             final_url,
             canonical,
-            TemplateFileRenderer(template),
-            (item,)))
+            template.render(item)))
 
         return results
     
@@ -106,11 +104,3 @@ class QueryRenderer(jules.plugins.QueryPlugin, jules.plugins.rendering.Rendering
     def maybe_render(t, *args, **kwargs):
         if t is not None:
             return t.render(*args, **kwargs)
-
-class TemplateFileRenderer(object):
-    def __init__(self, template):
-        self.template = template
-    
-    def render(self, f, *args):
-        for s in self.template.generate(*args):
-            f.write(s)
