@@ -27,6 +27,7 @@ class JulesEngine(object):
         self._new_bundles = {}
         self.context = {}
         self.config = {}
+        self.plugins = []
 
     def load_config(self):
         """Populates engine.config with the site configuration."""
@@ -43,6 +44,8 @@ class JulesEngine(object):
 
         self.load_config()
         self.load_plugins()
+        for ns in self.config.get('plugins', ()):
+            self.load_plugins(ns)
 
         for pack_def in self.config.get('packs', ()):
             pack_type, pack_name = pack_def.split(':', 1)
@@ -109,6 +112,7 @@ class JulesEngine(object):
             for input_dir, directory, filename in bundle:
                 self.middleware('preprocess_bundle_file',
                     k, input_dir, directory, filename)
+        for k, bundle in self.walk_bundles():
             bundle.prepare(self)
 
     def add_bundles(self, bundles, replace=False):
@@ -201,7 +205,11 @@ class JulesEngine(object):
         """Load engine plugins, and sort them by their plugin_order attribute."""
 
         # Loading "plain" plugins first, which are the plugin modules under jules.plugins
-        self.plugins = load(ns)
+        plugins = load(ns)
+        if not self.plugins:
+            self.plugins = plugins
+        else:
+            self.plugins._plugins += plugins._plugins
         self.plugins._plugins.sort(key=lambda p: getattr(p, 'plugin_order', 0))
 
         # Load Template plugins, which inject API into templates
@@ -229,6 +237,8 @@ class _BundleMeta(object):
     def __init__(self, defaults, meta):
         self.defaults = defaults
         self.meta = meta
+    def __str__(self):
+        return '<BundleMeta %r>' % (self.meta,)
     def __contains__(self, key):
         return key in self.meta or key in self.defaults
     def __getitem__(self, key):

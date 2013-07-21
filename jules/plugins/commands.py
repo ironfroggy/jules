@@ -77,7 +77,7 @@ class Tags(BaseCommand):
 
 class Serve(BaseCommand):
 
-    port = Option(dest='port', default=8000)
+    port = Option(dest='port', action='store', short='-p', default=8000)
     
     help = "Serve the site from the output directing, using a test server. Defaults to port 8000"
 
