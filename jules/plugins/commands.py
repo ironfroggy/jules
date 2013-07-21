@@ -55,9 +55,12 @@ class Build(BaseCommand):
     help = "Build the site, rendering all the bundles found."
 
     force = Option(short='-f', dest='force', action='store_true')
+    local = Option(short='-d', dest='deployprefix', action='store')
 
-    def execute(self, **kwargs):
+    def execute(self, deployprefix=None, **kwargs):
         output_dir = self.engine.config.get('output', self.parent.args['output'])
+        if deployprefix:
+            self.engine.config['domain'] = deployprefix
         if not os.path.exists(output_dir) or self.args['force']:
             self.engine.render_site(output_dir)
             
