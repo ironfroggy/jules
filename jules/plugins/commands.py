@@ -56,11 +56,14 @@ class Build(BaseCommand):
 
     force = Option(short='-f', dest='force', action='store_true')
     local = Option(short='-d', dest='deployprefix', action='store')
+    debug = Option(short='-D', dest='debug', action='store_true')
 
-    def execute(self, deployprefix=None, **kwargs):
+    def execute(self, deployprefix=None, debug=False, **kwargs):
         output_dir = self.engine.config.get('output', self.parent.args['output'])
         if deployprefix:
             self.engine.config['domain'] = deployprefix
+        if debug:
+            self.engine.config['debug'] = True
         if not os.path.exists(output_dir) or self.args['force']:
             self.engine.render_site(output_dir)
             

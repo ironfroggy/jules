@@ -107,11 +107,14 @@ class JulesEngine(object):
     def prepare_bundles(self):
         """Prepare the bundles, allow plugins to process them."""
 
+        # Allow plugins to preprocess bundles
         for k, bundle in self.walk_bundles():
             self.middleware('preprocess_bundle', k, bundle)
             for input_dir, directory, filename in bundle:
                 self.middleware('preprocess_bundle_file',
                     k, input_dir, directory, filename)
+                
+        # Allow bundles to prepare themselves
         for k, bundle in self.walk_bundles():
             bundle.prepare(self)
 
@@ -351,6 +354,16 @@ class Bundle(dict):
     def prepare(self, engine):
         """Prepare the bundle for the engine."""
 
+        # Merge parent bundle defaults
+        key_path = self.key.split('/')[: -1]
+        while key_path:
+            pkey = '/'.join(key_path)
+            pbundle = engine.bundles.get(pkey)
+            if pbundle is not None:
+                for key, value in pbundle.meta.get('child_defaults', {}).items():
+                    self.meta.setdefault(key, value)
+            key_path.pop()
+
         self._prepare_render(engine)
         self._prepare_contents(engine)
 
@@ -429,14 +442,18 @@ class Bundle(dict):
                 out.write(r.encode('utf8'))
             yield 'render', output_path
 
-        # If nothing to render, allow the bundle to copy content
         else:
+            # If nothing to render, allow the bundle to copy content
+            action = os.symlink if engine.config['debug'] else shutil.copy
+            action_log = 'link' if engine.config['debug'] else 'copy'
             for input_dir, directory, filename in self._to_copy(engine):
                 src_path = os.path.join(input_dir, directory, filename)
                 dest_path = os.path.join(output_dir, directory, filename)
                 ensure_path(os.path.dirname(dest_path))
-                shutil.copy(src_path, dest_path)
-                yield 'copy', dest_path
+                if os.path.exists(dest_path):
+                    os.unlink(dest_path)
+                action(src_path, dest_path)
+                yield action_log, dest_path
 
     def _to_copy(self, engine):
         for input_dir, directory, filename in self:
