@@ -39,11 +39,11 @@ TODO:
    hard to do that when it's general, yeah?
  - logging
  - scratch space in .jules/tmp
- - make postprocessing system more extension-aware / pluggable
-   - Postprocess .scss and .sass files.
  - Some kind of support for alternate domains/subdomains. Possibly want to
    change URL system to be "domain/foo" instead of "/foo", but maybe there's
    other ways too.
+ - Fix / vs /index.html silent conflict
+ - Wait, don't I do conflict detection at all? If not, add that, too.
 
 NICE:
 - Replace eval() with using jinja's expression syntax/semantics?

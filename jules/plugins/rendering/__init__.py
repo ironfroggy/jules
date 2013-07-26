@@ -74,13 +74,14 @@ class Renderer(jules.plugins.EnginePlugin):
     def render_urls(self):
         urlwriter = writer.URLWriter(self.tempdir)
         for url, data in self.renders:
-            data = self.postprocess_render(url, data)
+            data = self.postprocess_data(url, data)
+            url = self.postprocess_url(url)
             with urlwriter.urlopen(url) as f:
                 f.write(data)
         
         self.renders = []
     
-    def postprocess_render(self, url, data):
+    def postprocessors_for(self, url):
         # FIXME: MIME types instead, perhaps?
         if url.endswith("/") or url.endswith(".htm"):
             extension = '.html'
@@ -91,7 +92,7 @@ class Renderer(jules.plugins.EnginePlugin):
             # Need to restart the processor pipeline if the extension changes.
             for postprocessor in self.postprocessors:
                 if postprocessor.input_extension == extension:
-                    data = postprocessor.process_data(data)
+                    yield postprocessor
                     
                     if (postprocessor.output_extension is not None
                     and postprocessor.output_extension != extension):
@@ -100,8 +101,19 @@ class Renderer(jules.plugins.EnginePlugin):
             else:
                 # don't need to reset. Don't hate the coder, hate the code.
                 break
-        
+    
+    def postprocess_data(self, url, data):
+        for postprocessor in self.postprocessors_for(url):
+            data = postprocessor.process_data(data)
         return data
+    
+    def postprocess_url(self, url):
+        if url.endswith("/"):
+            return url
+        ext = os.path.splitext(url)[1]
+        for postprocessor in self.postprocessors_for(url):
+            ext = postprocessor.output_extension or ext
+        return os.path.splitext(url)[0] + ext
 
     def final_move(self):
         out = self.config.output_dir

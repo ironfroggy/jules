@@ -40,6 +40,7 @@ class TestTemplate(unittest.TestCase):
             self.do_test_atall(build)
             self.do_test_static(build)
             self.do_test_rstmeta(build)
+            self.do_test_sass(build)
             
         finally:
             shutil.rmtree(tempdir)
@@ -99,3 +100,8 @@ class TestTemplate(unittest.TestCase):
         
         self.assertEqual(p1, 'Post 1 Title\nPost 1 subtitle')
         self.assertEqual(p2, 'Post 2 Title Override\nPost 2 subtitle override')
+
+    def do_test_sass(self, build):
+        self.assertEqual(
+            open(os.path.join(build, 'testcss.css')).read(),
+            'a{color:#ff8000}')
