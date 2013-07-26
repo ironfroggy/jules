@@ -1,8 +1,7 @@
 Ideas for improving Jules:
 
 NEXT:
- - add HTML postprocessing non-mutation step
-   - dead link detection
+
 
 TODO:
 
@@ -41,6 +40,10 @@ TODO:
  - logging
  - scratch space in .jules/tmp
  - make postprocessing system more extension-aware / pluggable
+   - Postprocess .scss and .sass files.
+ - Some kind of support for alternate domains/subdomains. Possibly want to
+   change URL system to be "domain/foo" instead of "/foo", but maybe there's
+   other ways too.
 
 NICE:
 - Replace eval() with using jinja's expression syntax/semantics?
@@ -55,6 +58,7 @@ NICE:
   - minimize html as as to not use classes that none of the stylesheets use
     (optional, obviously, since it's error-prone).
   - minify html and other content (esp js, css)
+  - dead link detection
 - Some way to integrate a G+ feed into the blog feed (:O)
 
 MAYBE:

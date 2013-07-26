@@ -2,7 +2,7 @@ import unittest
 
 from genshi import HTML
 
-from jules.plugins.rendering.postprocessing import rewrite_canonical_urls
+from jules.plugins.rendering.postprocessing.xml import rewrite_canonical_urls
 
 def wrapper(a, b):
     for x in rewrite_canonical_urls(a, b):

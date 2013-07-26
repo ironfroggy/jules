@@ -3,6 +3,9 @@ from jules import utils
 class PluginDefinitionError(Exception):
     pass
 
+class PluginConflictError(Exception):
+    pass
+
 class BaseJulesPlugin(object):
     dependencies = None
     config = None

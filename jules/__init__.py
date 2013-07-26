@@ -147,6 +147,8 @@ class PluginDB(object):
             # FIXME: This nonsense is because of the namespace hack.
             if Plugin in seen:
                 continue
+            if vars(Plugin).get('abstract', False):
+                continue
             seen.add(Plugin)
             yield self.produce_instance(Plugin)
     

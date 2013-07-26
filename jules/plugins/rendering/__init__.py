@@ -1,6 +1,7 @@
 import os
 import tempfile
 import shutil
+import posixpath
 
 import genshi
 import jinja2
@@ -8,6 +9,8 @@ import jinja2
 import jules
 from jules.query import cache, unwrapping_kwargs, method_registrar
 from jules import writer, utils
+
+from .postprocessing import MutatingPostProcessingPlugin
 
 jules.add_namespace(__package__)
 
@@ -78,13 +81,26 @@ class Renderer(jules.plugins.EnginePlugin):
         self.renders = []
     
     def postprocess_render(self, url, data):
-        # FIXME: get something more elegant working...
-        if url.endswith("/") or url.endswith(".htm") or url.endswith(".html"):
-            e = genshi.HTML(data)
+        # FIXME: MIME types instead, perhaps?
+        if url.endswith("/") or url.endswith(".htm"):
+            extension = '.html'
+        else:
+            extension = posixpath.splitext(url)[-1]
+        
+        while True:
+            # Need to restart the processor pipeline if the extension changes.
             for postprocessor in self.postprocessors:
-                e |= postprocessor.process_etree
-            
-            return e.render()
+                if postprocessor.input_extension == extension:
+                    data = postprocessor.process_data(data)
+                    
+                    if (postprocessor.output_extension is not None
+                    and postprocessor.output_extension != extension):
+                        extension = postprocessor.output_extension
+                        break # reset loop
+            else:
+                # don't need to reset. Don't hate the coder, hate the code.
+                break
+        
         return data
 
     def final_move(self):
@@ -154,16 +170,3 @@ class RenderingPlugin(jules.plugins.BaseJulesPlugin):
         is a file whose content is at the URL.
         """
         raise NotImplementedError
-
-
-class MutatingPostProcessingPlugin(jules.plugins.BaseJulesPlugin):
-    processing_dependencies = ()
-    def process_etree(self, e):
-        """Process XML or HTML DOM, mutating it."""
-        pass
-
-# TODO:
-##BEGINNING = 0
-##END = -1
-##ANYWHERE = None
-##class NonmutatingPostProcessingPlugin(jules.plugins.BaseJulesPlugin):
