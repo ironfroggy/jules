@@ -1,4 +1,5 @@
 import itertools
+import code
 
 import jinja2
 
@@ -108,6 +109,24 @@ class BaseQuery(jules.plugins.QueryPlugin):
             d.update(item)
             d[count_key] = i
             yield d
+    
+    @register
+    def debug(self, results, _command):
+        # TODO: optional print. Instead, we ignore command...
+        results = list(results)
+        code.interact(
+            "Debugging all results, available as local variable `results`.",
+            local={'results': results})
+        return results
+    
+    @register
+    def debug_each(self, results, _command):
+        # TODO: optional print. Instead, we ignore command...
+        for i, item in enumerate(results):
+            code.interact(
+                "Debugging row %d, available as local variable `result`." % i,
+                local={'result': item})
+            yield item
 
     def finalize(self):
         pass

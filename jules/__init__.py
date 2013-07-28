@@ -4,7 +4,7 @@ from __future__ import print_function
 import os
 import re
 import shutil
-from fnmatch import fnmatch
+from fnmatch import fnmatch, translate
 
 import yaml
 from straight.plugin import load
@@ -27,7 +27,7 @@ class JulesEngine(object):
         self.config = self._load_config()
         self.input_dirs = self._find_input_dirs()
         self.plugins = PluginDB(self)
-        self.component_loader = ComponentLoader(self.plugins)
+        self.component_loader = ComponentLoader(self.config, self.plugins)
         self.bundles = self.load_bundles()
         
         # try to defer circular dependencies until JulesEngine is as initialized
@@ -175,10 +175,18 @@ class PluginDB(object):
         return cls(*args, **kwargs)
 
 class ComponentLoader(object):
-    def __init__(self, plugins):
+    def __init__(self, config, plugins):
+        self.config = config
         self.plugins = plugins
         
+        self.init_filter()
         self.init_components()
+    
+    def init_filter(self):
+        ignorelist = self.config.setdefault('ignore', [])
+        self.ignore_re = re.compile('|'.join(
+            '(?:%s)' % translate(pattern)
+            for pattern in ignorelist))
     
     def init_components(self):
         # FIXME: allow components to be placed in other directories via some
@@ -226,6 +234,10 @@ class ComponentLoader(object):
                             p2 = plugin.__name__))
             # no conflict
             self.occupied_basenames.update(dict.fromkeys(plugin.basenames, plugin))
+    
+    def filter_filename(self, filename):
+        """Return False if `filename` should be ignored, True otherwise"""
+        return not self.ignore_re.match(filename)
 
 class _BundleMeta(object):
     """This is a dict-like object for bundle meta data."""
@@ -301,7 +313,8 @@ class Bundle(object):
     def _load_components(self, engine):
         loader = engine.component_loader
         plugin_loads = {}
-        for sub in os.listdir(self.path):
+        #FIXME: multiple files with same basename
+        for sub in filter(loader.filter_filename, os.listdir(self.path)):
             basename, ext = os.path.splitext(sub)
             subpath = os.path.join(self.path, sub)
             try:

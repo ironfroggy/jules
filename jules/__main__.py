@@ -139,6 +139,9 @@ class JulesCommand(Command):
     tags = SubCommand('tags', Tags)
 
 def main(argv=None):
+    import logging
+    logging.basicConfig()
+    
     import sys
     argv = sys.argv if argv is None else argv
     JulesCommand().run(argv[1:])

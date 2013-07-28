@@ -1,7 +1,7 @@
 Ideas for improving Jules:
 
 NEXT:
-
+    Use the real ruby scss. Or else update? Current Python one is broked. :/
 
 TODO:
 
@@ -44,6 +44,10 @@ TODO:
    other ways too.
  - Fix / vs /index.html silent conflict
  - Wait, don't I do conflict detection at all? If not, add that, too.
+ - Nice error reporting
+   - Missing required meta fields
+   - query raises NameError
+   - meta key error in query
 
 NICE:
 - Replace eval() with using jinja's expression syntax/semantics?
