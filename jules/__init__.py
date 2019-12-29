@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-
+from collections import defaultdict
 import os
 import re
 import shutil
@@ -26,7 +26,7 @@ class JulesEngine(object):
         self.bundles = {}
         self._new_bundles = {}
         self.context = {}
-        self.config = {}
+        self.config = defaultdict(lambda: None)
         self.plugins = []
 
     def load_config(self):
@@ -117,6 +117,8 @@ class JulesEngine(object):
         # Allow bundles to prepare themselves
         for k, bundle in self.walk_bundles():
             bundle.prepare(self)
+        for k, bundle in self.walk_bundles():
+            bundle._prepare_contents(self)
 
     def add_bundles(self, bundles, replace=False):
         """Add additional bundles into the engine, mapping key->bundle."""
@@ -365,7 +367,7 @@ class Bundle(dict):
             key_path.pop()
 
         self._prepare_render(engine)
-        self._prepare_contents(engine)
+        # self._prepare_contents(engine)
 
     def _prepare_render(self, engine):
         """Prepare the template and output name of a bundle."""
