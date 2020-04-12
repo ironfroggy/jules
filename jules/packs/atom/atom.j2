@@ -42,7 +42,7 @@
             {% endif %}
 
             <content type="html">
-                {{ bundle.content }}
+                {{ bundle.content|escapeForXML }}
             </content>
         </entry>
     {% endfor %}
