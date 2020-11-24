@@ -24,4 +24,3 @@ def sortbundles(bundles, props):
         return tuple(values)
     bundles.sort(key=key)
     return bundles
-

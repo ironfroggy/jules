@@ -1,5 +1,17 @@
+try:
+    from html.parser import HTMLParser
+except ImportError:
+    from HTMLParser import HTMLParser
+from xml.sax.saxutils import escape
 import re
+
 from bs4 import BeautifulSoup
+
+try:
+    string = unicode
+except NameError:
+    string = str
+
 
 def register(func):
     globals()[func.__name__] = func
@@ -15,13 +27,10 @@ def smartTitle(string):
     parts = [firstCap(p) for p in parts]
     return ''.join(parts)
 
-def truncateHTML(string, length=140):
-    return unicode(BeautifulSoup(string[:length], "html.parser"))
+def truncateHTML(html, length=140):
+    return string(BeautifulSoup(html[:length], "html.parser"))
 
-def escapeForXML(string):
-    from HTMLParser import HTMLParser
-    from xml.sax.saxutils import escape
-
+def escapeForXML(html):
     h = HTMLParser()
-    string = h.unescape(string)
-    return escape(string)
+    html = h.unescape(html)
+    return escape(html)

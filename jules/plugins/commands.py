@@ -7,6 +7,7 @@ import shutil
 import operator
 import itertools
 from datetime import datetime
+from threading import Thread
 
 import yaml
 
@@ -90,22 +91,57 @@ class Serve(BaseCommand):
     def execute(self, port, **kwargs):
         output_dir = self.parent.args['output']
 
-        # python 2
-        try:
-            import SimpleHTTPServer
-            import SocketServer
-            handler = SimpleHTTPServer.SimpleHTTPRequestHandler
-            server = SocketServer.TCPServer
-        # python 3
-        except ImportError:
-            from http.server import SimpleHTTPRequestHandler as handler
-            from http.server import HTTPServer as server
+        from http.server import SimpleHTTPRequestHandler as handler
+        from http.server import HTTPServer as HTTPServerBase
+
+        class HTTPServer(HTTPServerBase):
+            running = False
+            def serve_forever(self):
+                self.running = True
+                while self.running:
+                    self.handle_request()
+            def stop(self):
+                self.running = False
+
+        class dir_handler(handler):
+            def __init__(*args, **kwargs):
+                handler.__init__(*args, directory=output_dir, **kwargs)
 
         handler.extensions_map[''] = 'text/html'
-        httpd = server(("", int(port)), handler)
+        httpd = HTTPServer(("", int(port)), dir_handler)
 
-        os.chdir(output_dir)
-        httpd.serve_forever()
+        self.engine.render_site(output_dir)
+
+        self.thread = Thread(target=httpd.serve_forever)
+        self.thread.start()
+        print("server started.")
+
+        from watchdog.observers.polling import PollingObserver as Observer
+        from watchdog.events import FileSystemEventHandler
+        import time
+
+        def on_any_event(event, *args, **kwargs):
+            print("Rebuilding...")
+            self.engine.reload_source(event.src_path)
+            self.engine.render_site(output_dir)
+            print("Site rebuilt.")
+
+        event_handler = FileSystemEventHandler()
+        event_handler.on_any_event = on_any_event
+        observer = Observer()
+        for directory in self.engine.input_dirs:
+            if os.path.exists(directory):
+                observer.schedule(event_handler, directory, recursive=True)
+                print("watching", directory)
+            else:
+                print("no", directory)
+        observer.start()
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            observer.stop()
+            httpd.stop()
 
 
 class BundleMeta(BaseCommand):

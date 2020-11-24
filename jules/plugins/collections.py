@@ -101,7 +101,7 @@ class Collector(object):
         self.meta = jules._BundleMeta(engine.config.get('bundle_defaults', {}), collection_meta)
 
     def collect(self, rule, group_by_property, bundle):
-        """Collect the bungle if it is a proper candidate for the collection.
+        """Collect the bundle if it is a proper candidate for the collection.
 
         rule: The rule to match the bundle by.
             is - match if the grouper property is equal to the group value

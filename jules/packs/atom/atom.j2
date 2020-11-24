@@ -23,7 +23,7 @@
     {% for bundle in engine.get_bundles_by("publish_time", "desc", status="published") %}
         <entry>
             <title type="html">{{ bundle.meta.title }}</title>
-            <author><name>{{ bundle.meta.author|escape or config.default_author|escape }}</name></author>
+            <author><name>{{ bundle.meta.get('author', config.default_author)|escape }}</name></author>
             <link href="http://{{ config.domain }}{{ bundle.url() }}{% if 'feed_campaign' in config %}?utm_source=subscriber&amp;utm_medium=feed&amp;utm_term={{ term }}&amp;utm_campaign={{config.feed_campaign.name}}{% endif %}"/>
             <updated>{{ bundle.meta.updated_time|iso8601 }}</updated>
             <published>{{ bundle.meta.publish_time|iso8601 }}</published>

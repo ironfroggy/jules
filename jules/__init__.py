@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 from fnmatch import fnmatch
+import warnings
 
 import yaml
 from straight.plugin import load
@@ -12,6 +13,7 @@ import jinja2
 
 import jules
 import jules.filters
+import jules.plugins.default
 from jules.utils import ensure_path, filter_bundles
 
 
@@ -35,7 +37,7 @@ class JulesEngine(object):
         config_path = os.path.join(self.src_path, 'site.yaml')
         if os.path.exists(config_path):
             with open(config_path) as f:
-                self.config.update(yaml.load(f))
+                self.config.update(yaml.safe_load(f))
         else:
             raise ValueError("No configuration file found. Looking for site.yaml at `{}`.".format(self.src_path))
 
@@ -60,6 +62,7 @@ class JulesEngine(object):
         for filter_name in dir(jules.filters):
             if not filter_name.startswith('_'):
                 self._jinja_env.filters[filter_name] = getattr(jules.filters, filter_name)
+                print('load filter', filter_name)
 
         def key(filename):
             d = re.search(r'^(\d+)', filename)
@@ -74,6 +77,23 @@ class JulesEngine(object):
         self.input_dirs.sort(key=key)
 
         self.find_bundles()
+    
+    def reload_source(self, path=None):
+        # Todo: add cache for unchanged contents
+        for key, bundle in self.bundles.items():
+            reload_bundle = False
+            if path is None:
+                reload_bundle = True
+            else:
+                path = os.path.abspath(path)
+                for entry in bundle.entries:
+                    entry_path = os.path.abspath(os.path.join(*entry))
+                    if path == entry_path:
+                        reload_bundle = True
+            if reload_bundle:
+                bundle._meta = None
+                bundle.content = None
+        self.prepare_bundles()
 
     def find_bundles(self):
         """Find all bundles in the input directories, load them, and prepare them."""
@@ -116,6 +136,8 @@ class JulesEngine(object):
                 
         # Allow bundles to prepare themselves
         for k, bundle in self.walk_bundles():
+            if not bundle.meta:
+                warnings.warn(f"Bundle missing metadata: {key}")
             bundle.prepare(self)
         for k, bundle in self.walk_bundles():
             bundle._prepare_contents(self)
@@ -197,14 +219,21 @@ class JulesEngine(object):
         """Render all bundles to the output directory."""
 
         for k, bundle in self.bundles.items():
+            if not bundle.meta:
+                warnings.warn(f"Bundle missing metadata: {bundle.key}")
+                continue
             print('from bundle', bundle.key)
             for action, output in bundle.render(self, output_dir):
                 print('    ', action, output)
 
-    def get_template(self, name):
+    def get_template(self, /, name=None, string=None):
         """Load one template by name."""
 
-        return self._jinja_env.get_template(name)
+        assert name or string and not (name and string)
+        if name:
+            return self._jinja_env.get_template(name)
+        elif string:
+            return self._jinja_env.from_string(string)
 
     def load_plugins(self, ns='jules.plugins'):
         """Load engine plugins, and sort them by their plugin_order attribute."""
@@ -299,12 +328,24 @@ class Bundle(dict):
         """Bundle meta data loaded from a YAML file in the bundle."""
 
         if self._meta is None:
-            yaml_filename = self.by_ext('yaml')
-            if yaml_filename:
-                data = yaml.load(open(yaml_filename))
-            else:
-                data = {}
+            data = {}
+            if filename := self.by_ext('yaml'):
+                data = yaml.safe_load(open(filename))
+            elif filename := self.by_ext('rst'):
+                rst_src = open(filename).read()
+                try:
+                    header, body = re.split(r'\n+[ ]*---[ ]*\n+', rst_src, 1)
+                except ValueError:
+                    pass
+                else:
+                    if header and body:
+                        data = yaml.safe_load(header)
             self._meta = _BundleMeta(self._metadefaults, data)
+            if 'publish_time' in self._meta:
+                self._meta.setdefault('created_time', self._meta['publish_time'])
+                self._meta.setdefault('updated_time', self._meta['publish_time'])
+                self._meta.setdefault('year', self._meta['publish_time'].strftime('%Y'))
+                self._meta.setdefault('month', self._meta['publish_time'].strftime('%Y/%m'))
         return self._meta
 
     @property
@@ -333,9 +374,11 @@ class Bundle(dict):
     def add(self, input_dir, directory, filename):
         """Add a single file to the bundle."""
 
-        self.entries.append((input_dir, directory, filename))
-        base, ext = os.path.splitext(filename)
-        self._files_by_ext[ext.lstrip('.')] = (input_dir, directory, filename)
+        entry = (input_dir, directory, filename)
+        if entry not in self.entries:
+            self.entries.append(entry)
+            base, ext = os.path.splitext(filename)
+            self._files_by_ext[ext.lstrip('.')] = entry
 
     def by_ext(self, ext):
         """Find one file in the bundle with the given extension, or return None"""
@@ -382,12 +425,12 @@ class Bundle(dict):
                 template_name = self.meta.get('template')
                 template = None
                 if template_name is not None:
-                    template = engine.get_template(template_name)
-                #if template is None:
-                #    template_path = self.by_ext('j2')
-                #    if template_path:
-                #        with open(template_path) as f:
-                #            template = jinja2.Template(f.read())
+                    template = engine.get_template(name=template_name)
+                if template is None:
+                    template_path = self.by_ext('j2')
+                    if template_path:
+                        with open(template_path) as f:
+                            template = engine.get_template(string=f.read())
                 
                 # Prepare output location
                 output_ext = self.meta.get('output_ext', 'html')
@@ -438,11 +481,15 @@ class Bundle(dict):
                 'bundles': engine.bundles.values(),
                 'plugins': plugins,
             })
-            r = template.render(ctx)
-            output_path = self._finalize_output_path(output_dir, output_path)
-            with open(output_path, 'wb') as out:
-                out.write(r.encode('utf8'))
-            yield 'render', output_path
+            try:
+                r = template.render(ctx)
+            except Exception as e:
+                yield 'error', e.args[0]
+            else:
+                output_path = self._finalize_output_path(output_dir, output_path)
+                with open(output_path, 'wb') as out:
+                    out.write(r.encode('utf8'))
+                yield 'render', output_path
 
         else:
             # If nothing to render, allow the bundle to copy content
@@ -485,18 +532,22 @@ class Bundle(dict):
                         content_path = os.path.join(input_dir, directory, filename)
                         break
 
-        content_parser = ext_plugins[ext]
-
+        src = None
         if content_path:
             try:
-                self.content = ext_plugins[ext].parse(open(content_path))
+                src = open(content_path, 'r').read()
             except IOError:
                 pass
-        if not self.content:
+        if not src:
             src = self.meta.get('content')
-            if src:
-                self.content = ext_plugins[ext].parse_string(src)
+        
+        if src:
+            try:
+                header, body = re.split(r'\n+[ ]*---[ ]*\n+', src, 1)
+            except ValueError:
+                body = src
 
+            self.content = ext_plugins[ext].parse_string(body)
 
     def _url(self):
         key = self.key.lstrip('./')
