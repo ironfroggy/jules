@@ -7,7 +7,7 @@ verify_ssl = true
 
 [packages]
 docutils = "*"
-Jinja2 = "==2.11"
+Jinja2 = "==2.10.1"
 Pygments = "==1.5"
 PyYAML = "*"
 "straight.plugin" = "==1.3"
